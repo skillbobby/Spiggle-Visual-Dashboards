@@ -1,0 +1,101 @@
+name: Bump package display
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: ${{ !contains(github.event.head_commit.message, '[skip update]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Increment README Package patch (1–9, then next minor)
+        run: |
+          python3 <<'PY'
+          import re, subprocess, sys
+          from pathlib import Path
+
+          def package_version(text: str) -> str | None:
+              m = re.search(r"\*\*Package\*\* \| `[^`]+` v(\d+\.\d+\.\d+)", text)
+              return m.group(1) if m else None
+
+          readme = Path("README.md")
+          if not readme.is_file():
+              sys.exit("README.md missing")
+          text = readme.read_text(encoding="utf-8")
+          cur = package_version(text)
+          if not cur:
+              sys.exit("No Package vN.N.N in README")
+
+          parents = subprocess.check_output(
+              ["git", "rev-list", "--parents", "-n", "1", "HEAD"],
+              text=True,
+          ).split()
+          if len(parents) > 2:
+              print("Merge commit — skip bump")
+              sys.exit(0)
+
+          try:
+              old_text = subprocess.check_output(
+                  ["git", "show", "HEAD~1:README.md"],
+                  text=True,
+                  stderr=subprocess.DEVNULL,
+              )
+              old = package_version(old_text)
+              if old and old != cur:
+                  print(f"Package version already changed ({old} -> {cur})")
+                  sys.exit(0)
+          except subprocess.CalledProcessError:
+              pass
+
+          major, minor, patch = (int(p) for p in cur.split("."))
+          if patch >= 9:
+              minor += 1
+              patch = 0
+          else:
+              patch += 1
+          new = f"{major}.{minor}.{patch}"
+
+          text, n = re.subn(
+              r"(\*\*Package\*\* \| `[^`]+` )v\d+\.\d+\.\d+",
+              rf"\1v{new}",
+              text,
+              count=1,
+          )
+          if n != 1:
+              sys.exit("Failed to rewrite README Package version")
+          readme.write_text(text, encoding="utf-8")
+
+          docs = Path("docs")
+          if docs.is_dir():
+              for html in docs.rglob("*.html"):
+                  body = html.read_text(encoding="utf-8")
+                  html.write_text(
+                      re.sub(
+                          r'(class="footer-update">)v\d+\.\d+\.\d+',
+                          rf"\1v{new}",
+                          body,
+                      ),
+                      encoding="utf-8",
+                  )
+
+          print(new)
+          Path("/tmp/spiggle-display-version").write_text(new, encoding="utf-8")
+          PY
+          if [ ! -f /tmp/spiggle-display-version ]; then
+            echo "No version bump"
+            exit 0
+          fi
+          new=$(cat /tmp/spiggle-display-version)
+          git config user.name "Junior"
+          git config user.email "nathanjun876@gmail.com"
+          git add README.md docs || true
+          git diff --cached --quiet && echo "No version bump" && exit 0
+          git commit -m "Bump package display to v${new} [skip update]"
+          git push

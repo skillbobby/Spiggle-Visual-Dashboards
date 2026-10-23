@@ -1,0 +1,51 @@
+{
+    "name": "spiggle/visual-dashboards",
+    "description": "Spiggle Visual Dashboards — private Power BI-style dashboard canvas for Laravel Filament.",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "keywords": [
+        "laravel",
+        "filament",
+        "dashboard",
+        "visual-dashboards",
+        "charts",
+        "analytics",
+        "spiggle"
+    ],
+    "authors": [
+        {
+            "name": "Spiggle"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^3.3|^4.0|^5.0",
+        "illuminate/support": ">=11.0",
+        "illuminate/database": ">=11.0",
+        "livewire/livewire": "^3.0|^4.0"
+    },
+    "suggest": {
+        "spiggle/form-builder-core": "Form submission data source driver.",
+        "bezhansalleh/filament-shield": "Role-based access for dashboard resources."
+    },
+    "autoload": {
+        "psr-4": {
+            "Spiggle\\VisualDashboards\\": "src/",
+            "Spiggle\\VisualDashboards\\Database\\Factories\\": "database/factories/",
+            "Spiggle\\VisualDashboards\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Spiggle\\VisualDashboards\\VisualDashboardsServiceProvider"
+            ],
+            "aliases": {
+                "VisualDashboards": "Spiggle\\VisualDashboards\\Facades\\VisualDashboards"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

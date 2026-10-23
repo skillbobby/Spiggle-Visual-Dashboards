@@ -1,0 +1,13 @@
+.guide {
+  padding: 3rem 0;
+}
+
+.guide ol {
+  line-height: 1.8;
+}
+
+.guide code {
+  background: #f4f4f5;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spiggle Dashlet Core — Guide</title>
+  <link rel="stylesheet" href="../site.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="../index.html">Spiggle Dashlet <span>Core</span></a>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="index.html">Guide</a>
+        <a href="https://github.com/skillbobby/spiggle-visual-dashboards">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main class="guide">
+    <div class="container">
+      <h1>Getting started</h1>
+      <ol>
+        <li>Install <code>spiggle/visual-dashboards</code> and run migrations.</li>
+        <li>Register <code>VisualDashboardsPlugin::make()</code> in your Filament panel provider.</li>
+        <li>Create a dashboard under <strong>Dashboards → Custom Dashboards</strong>.</li>
+        <li>Click <strong>Add dashlet</strong> and complete the Filament wizard: data source → filters → transform → visualization → preview and publish.</li>
+        <li>Drag and resize cards on the grid — cards wrap to the next row and never cover each other. Layout saves after you stop moving.</li>
+        <li>Use <strong>Edit</strong> or <strong>Remove</strong> on any card. Remove asks for confirmation.</li>
+      </ol>
+
+      <h2>Data sources</h2>
+      <ul>
+        <li><strong>Data model</strong> — Users, daily logins by role, form submissions, form audit log (when Form Builder is installed), and sample metrics.</li>
+        <li><strong>Database table</strong> — whitelisted tables from <code>config/dashlets.php</code>.</li>
+        <li><strong>Live API</strong> — GET a JSON URL with optional headers and a JSON path.</li>
+        <li><strong>File</strong> — upload a CSV and chart its rows.</li>
+      </ul>
+      <p>Step 2 adds static filters, rolling windows, and AND/OR groups. Step 3 groups dimensions and applies COUNT/SUM/AVG/MIN/MAX. Step 5 requires a heading and subheading, and can limit the dashlet to Spatie / Shield roles.</p>
+
+      <h2>Live preview</h2>
+      <p>The finalize step renders a mini KPI card, table, or ApexCharts preview with a Filament loading indicator. It refreshes as you change earlier wizard steps (300ms debounce, up to 50 preview rows).</p>
+
+      <h2>Export / import</h2>
+      <p>From the dashboard list or view page, use <strong>Export JSON</strong> to download dashboard metadata and dashlets. Use <strong>Import JSON</strong> on the list page to restore layouts. CLI equivalents:</p>
+      <pre><code>php artisan dashlet:export 1
+php artisan dashlet:import storage/app/dashlet-export-1.json --user=1 --replace</code></pre>
+
+      <p>Seed demo dashboards with every Core dashlet type:</p>
+      <pre><code>php artisan dashlet:seed</code></pre>
+      <p>This creates <strong>Overview</strong>, <strong>User analytics</strong>, <strong>Form operations</strong>, and <strong>Access analytics</strong> (stacked daily logins by role with in-dashlet Day / Week / Month / Year) for your first admin (or first user). Re-run safely — existing demo dashlets are updated in place. Use <code>--fresh</code> to remove and recreate them.</p>
+      <p>Run <code>php artisan dashlet:verify</code> after install to exercise schema, data entities, preview payloads, export/import, and layout sync.</p>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <small class="footer-update">v2.1.1</small>
+    </div>
+  </footer>
+</body>
+</html>

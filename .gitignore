@@ -1,0 +1,7 @@
+/vendor/
+*:Zone.Identifier
+/.phpunit.cache/
+composer.lock
+.phpunit.result.cache
+.idea/
+.vscode/
