@@ -18,7 +18,9 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Wizard\Step;
 use Illuminate\Support\HtmlString;
+use Spiggle\FormBuilder\Models\Form;
 use Spiggle\VisualDashboards\DataSources\DatabaseTableDataSource;
+use Spiggle\VisualDashboards\DataSources\FormAuditLogDataSource;
 use Spiggle\VisualDashboards\Models\Dashlet;
 use Spiggle\VisualDashboards\Services\DashletRegistry;
 use Spiggle\VisualDashboards\Services\DataEngine;
@@ -27,6 +29,7 @@ use Spiggle\VisualDashboards\Support\DashletTypes;
 use Spiggle\VisualDashboards\Support\FeatureCatalog;
 use Spiggle\VisualDashboards\Support\QueryConfig;
 use Spiggle\VisualDashboards\Support\ValueFormatter;
+use Spiggle\VisualDashboards\Support\VisualTypes;
 
 class DashletFormSchema
 {
@@ -395,36 +398,36 @@ class DashletFormSchema
                         ->visible(fn (Get $get): bool => (bool) $get('visual.period_filter')),
                 ]),
             Section::make('Map data')
-                ->description(fn (Get $get): string => \Spiggle\VisualDashboards\Support\VisualTypes::fieldBlueprint((string) $get('type'))['intro'] ?? 'Bind fields from the selected source.')
+                ->description(fn (Get $get): string => VisualTypes::fieldBlueprint((string) $get('type'))['intro'] ?? 'Bind fields from the selected source.')
                 ->compact()
                 ->columns(2)
                 ->visible(fn (Get $get): bool => ! in_array((string) $get('type'), ['stat_card', 'hero', 'insight_list', 'table'], true))
                 ->schema([
                     Select::make('mapping.x')
-                        ->label(fn (Get $get): string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['x'])
+                        ->label(fn (Get $get): string => VisualTypes::mappingLabels((string) $get('type'))['x'])
                         ->native(false)
                         ->searchable()
                         ->options(fn (Get $get): array => self::columnOptionsForGet($get))
                         ->live(debounce: $debounce)
                         ->placeholder('Select a field…')
-                        ->helperText(fn (Get $get): ?string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['x_help']),
+                        ->helperText(fn (Get $get): ?string => VisualTypes::mappingLabels((string) $get('type'))['x_help']),
                     Select::make('mapping.y')
-                        ->label(fn (Get $get): string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['y'])
+                        ->label(fn (Get $get): string => VisualTypes::mappingLabels((string) $get('type'))['y'])
                         ->native(false)
                         ->searchable()
                         ->options(fn (Get $get): array => self::columnOptionsForGet($get))
                         ->live(debounce: $debounce)
                         ->placeholder('Select a field…')
-                        ->helperText(fn (Get $get): ?string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['y_help']),
+                        ->helperText(fn (Get $get): ?string => VisualTypes::mappingLabels((string) $get('type'))['y_help']),
                     Select::make('mapping.series')
-                        ->label(fn (Get $get): string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['series'])
+                        ->label(fn (Get $get): string => VisualTypes::mappingLabels((string) $get('type'))['series'])
                         ->native(false)
                         ->searchable()
                         ->options(fn (Get $get): array => self::columnOptionsForGet($get))
                         ->live(debounce: $debounce)
                         ->placeholder('None (single series)')
-                        ->helperText(fn (Get $get): ?string => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['series_help'])
-                        ->visible(fn (Get $get): bool => \Spiggle\VisualDashboards\Support\VisualTypes::mappingLabels((string) $get('type'))['show_series']),
+                        ->helperText(fn (Get $get): ?string => VisualTypes::mappingLabels((string) $get('type'))['series_help'])
+                        ->visible(fn (Get $get): bool => VisualTypes::mappingLabels((string) $get('type'))['show_series']),
                 ]),
         ];
     }
@@ -618,7 +621,7 @@ class DashletFormSchema
                 if ($source->key() === 'form_audit_logs' && $key === 'action') {
                     $fields[] = Select::make('filters.action')
                         ->label($label)
-                        ->options(fn (): array => app(\Spiggle\VisualDashboards\DataSources\FormAuditLogDataSource::class)->actionOptions())
+                        ->options(fn (): array => app(FormAuditLogDataSource::class)->actionOptions())
                         ->placeholder('Any action')
                         ->native(false)
                         ->searchable()
@@ -871,11 +874,11 @@ class DashletFormSchema
      */
     protected static function formOptions(): array
     {
-        if (! class_exists(\Spiggle\FormBuilder\Models\Form::class)) {
+        if (! class_exists(Form::class)) {
             return [];
         }
 
-        return \Spiggle\FormBuilder\Models\Form::query()
+        return Form::query()
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();

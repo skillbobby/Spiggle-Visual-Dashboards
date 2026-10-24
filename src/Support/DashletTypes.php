@@ -23,6 +23,7 @@ class DashletTypes
             'donut' => 'Donut chart',
             'funnel' => 'Funnel chart',
             'radialbar' => 'Radial gauge',
+            'treemap' => 'Treemap',
             'radar' => 'Radar chart',
             'container' => 'Container group',
         ];

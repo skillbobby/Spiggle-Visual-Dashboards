@@ -8,6 +8,7 @@ use Spiggle\VisualDashboards\DataSources\FormAuditLogDataSource;
 use Spiggle\VisualDashboards\DataSources\FormSubmissionDataSource;
 use Spiggle\VisualDashboards\Models\Dashlet;
 use Spiggle\VisualDashboards\Support\ChartVariantCatalog;
+use Spiggle\VisualDashboards\Support\DashboardFilters;
 use Spiggle\VisualDashboards\Support\KpiCardPresenter;
 use Spiggle\VisualDashboards\Support\QueryConfig;
 use Spiggle\VisualDashboards\Support\ValueFormatter;
@@ -88,7 +89,7 @@ class DashletRegistry
      */
     public function renderPayload(Dashlet $dashlet, array $overrides = []): array
     {
-        $cacheKey = $dashlet->id.'|'.($dashlet->updated_at?->timestamp ?? 0).'|'.$dashlet->type.'|'.md5(json_encode($overrides));
+        $cacheKey = $dashlet->id.'|'.md5((string) json_encode($dashlet->config)).'|'.$dashlet->type.'|'.md5((string) json_encode($overrides));
 
         if (isset($this->payloadCache[$cacheKey])) {
             return $this->payloadCache[$cacheKey];
@@ -175,8 +176,7 @@ class DashletRegistry
             $statConfig = KpiCardPresenter::configForQuery(array_replace_recursive($config, ['visual' => $visual]));
             $statQueryConfig = QueryConfig::normalize($statConfig);
             $chart = $engine->chartFromConfig('stat_card', $statQueryConfig);
-
-            return $this->payloadCache[$cacheKey] = array_replace($payload, KpiCardPresenter::enrich([
+            $enriched = array_replace($payload, KpiCardPresenter::enrich([
                 'value' => $chart['value'] ?? 0,
                 'stat_label' => $chart['label'] ?? 'Total',
                 'formatted' => $chart['formatted'] ?? ValueFormatter::format(
@@ -187,11 +187,15 @@ class DashletRegistry
                 'hint' => $chart['hint'] ?? null,
                 'delta' => $chart['delta'] ?? null,
                 'up' => (bool) ($chart['up'] ?? false),
-                'sparkline' => $chart['sparkline'] ?? [],
+                'sparkline' => $this->sparklineFor($engine, $statQueryConfig, $visual, $chart['sparkline'] ?? []),
                 'badge' => $chart['badge'] ?? null,
                 'logo' => $chart['logo'] ?? null,
                 'logo_color' => $chart['logo_color'] ?? $visual['color'] ?? null,
             ], $statConfig));
+            $enriched['details'] = $this->supportingDetails($engine, $statQueryConfig, $visual);
+            $enriched['kpi']['value_suffix'] = (string) data_get($visual, 'kpi.value_suffix', '');
+
+            return $this->payloadCache[$cacheKey] = $enriched;
         }
 
         if ($dashlet->type === 'table') {
@@ -208,6 +212,90 @@ class DashletRegistry
         $payload['summary'] = $payload['chart']['summary'] ?? null;
 
         return $this->payloadCache[$cacheKey] = $payload;
+    }
+
+    /**
+     * @param  array<string, mixed>  $queryConfig
+     * @param  array<string, mixed>  $visual
+     * @param  array<int, mixed>  $fallback
+     * @return list<float>
+     */
+    protected function sparklineFor(DataEngine $engine, array $queryConfig, array $visual, array $fallback): array
+    {
+        $field = DashboardFilters::column((string) data_get($visual, 'kpi.sparkline_field', ''));
+
+        if ($field === '') {
+            return array_values(array_map(static fn (mixed $value): float => (float) $value, $fallback));
+        }
+
+        $sparkConfig = $queryConfig;
+        $sparkConfig['group_by'] = [$field];
+        $sparkConfig['calculated_fields'] = [];
+        $sparkConfig['filters']['grain'] = (string) data_get($visual, 'kpi.sparkline_grain', 'week');
+        $sparkConfig['mapping']['x'] = $field;
+        $alias = (string) data_get($sparkConfig, 'aggregations.0.alias', 'value');
+        $rows = $engine->previewFromConfig($sparkConfig, 500);
+
+        usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left[$field] ?? ''), (string) ($right[$field] ?? '')));
+
+        return array_values(array_map(
+            static fn (array $row): float => (float) ($row[$alias] ?? 0),
+            $rows
+        ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $queryConfig
+     * @param  array<string, mixed>  $visual
+     * @return list<array{label: string, formatted: string}>
+     */
+    protected function supportingDetails(DataEngine $engine, array $queryConfig, array $visual): array
+    {
+        $supporting = data_get($visual, 'kpi.supporting', []);
+
+        if (! is_array($supporting)) {
+            return [];
+        }
+
+        $details = [];
+
+        foreach ($supporting as $support) {
+            if (! is_array($support)) {
+                continue;
+            }
+
+            $fn = strtoupper((string) ($support['fn'] ?? 'COUNT'));
+            $field = (string) ($support['field'] ?? '*');
+
+            if (! in_array($fn, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX'], true)) {
+                continue;
+            }
+
+            if ($field !== '*' && DashboardFilters::column($field) === '') {
+                continue;
+            }
+
+            $supportConfig = $queryConfig;
+            $supportConfig['group_by'] = [];
+            $supportConfig['calculated_fields'] = [];
+            $supportConfig['aggregations'] = [[
+                'fn' => $fn,
+                'field' => $field === '*' ? '*' : DashboardFilters::column($field),
+                'alias' => 'value',
+            ]];
+            $supportConfig['mapping'] = ['y' => 'value'];
+            $value = $engine->statValueFromConfig($supportConfig);
+            $details[] = [
+                'label' => (string) ($support['label'] ?? $field),
+                'formatted' => ValueFormatter::format(
+                    $value,
+                    (string) ($support['format'] ?? 'number'),
+                    (string) data_get($visual, 'currency', 'USD')
+                ),
+            ];
+        }
+
+        return $details;
     }
 
     /**

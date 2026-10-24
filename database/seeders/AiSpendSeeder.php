@@ -2,18 +2,18 @@
 
 namespace Spiggle\VisualDashboards\Database\Seeders;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Spiggle\FormBuilder\Models\Form;
+use Spiggle\FormBuilder\Models\FormSubmission;
 use Spiggle\VisualDashboards\Models\AiAnomaly;
 use Spiggle\VisualDashboards\Models\AiForecast;
 use Spiggle\VisualDashboards\Models\AiInsight;
 use Spiggle\VisualDashboards\Models\AiService;
 use Spiggle\VisualDashboards\Models\AiUsageReport;
 use Spiggle\VisualDashboards\Support\AiSpendFormSync;
-use Spiggle\FormBuilder\Models\Form;
-use Spiggle\FormBuilder\Models\FormSubmission;
 
 class AiSpendSeeder extends Seeder
 {

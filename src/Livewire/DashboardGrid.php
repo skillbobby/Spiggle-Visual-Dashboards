@@ -11,6 +11,7 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Width;
 use Livewire\Component;
 use Spiggle\VisualDashboards\Filament\Support\DashletFormSchema;
+use Spiggle\VisualDashboards\Livewire\Concerns\InteractsWithDashboardFilters;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
 use Spiggle\VisualDashboards\Models\Dashlet;
 use Spiggle\VisualDashboards\Services\LayoutManager;
@@ -19,6 +20,7 @@ use Spiggle\VisualDashboards\Support\DashboardAccess;
 class DashboardGrid extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions;
+    use InteractsWithDashboardFilters;
     use InteractsWithSchemas;
 
     public int $dashboardId;
@@ -46,6 +48,7 @@ class DashboardGrid extends Component implements HasActions, HasSchemas
 
         $this->dashboardId = $dashboardId;
         $this->presentationMode = $presentationMode;
+        $this->initializeDashboardFilters();
         $this->refreshLayout();
     }
 
@@ -162,6 +165,7 @@ class DashboardGrid extends Component implements HasActions, HasSchemas
                 'y' => (int) $item['y'],
                 'w' => (int) $item['w'],
                 'h' => (int) $item['h'],
+                'z' => (int) ($item['z'] ?? 0),
             ])
             ->values()
             ->all();
@@ -194,14 +198,14 @@ class DashboardGrid extends Component implements HasActions, HasSchemas
 
     public function render()
     {
-        return view('visual-dashboards::livewire.dashboard-grid', [
+        return view('visual-dashboards::livewire.dashboard-grid', array_merge([
             'dashboard' => $this->dashboard(),
             'items' => $this->gridItems(),
             'columns' => (int) config('visual-dashboards.grid.columns', 12),
             'cellHeight' => (int) config('visual-dashboards.grid.cell_height', 80),
             'saveDebounceMs' => (int) config('visual-dashboards.grid.save_debounce_ms', 450),
             'presentationMode' => $this->presentationMode,
-        ]);
+        ], $this->dashboardFilterViewData(canEditFilters: ! $this->presentationMode)));
     }
 
     /**
@@ -210,7 +214,7 @@ class DashboardGrid extends Component implements HasActions, HasSchemas
     protected function gridItems(): array
     {
         return app(LayoutManager::class)
-            ->gridItems($this->dashboard(), $this->grains)
+            ->gridItems($this->dashboard(), $this->grains, activeFilters: $this->filterValues)
             ->values()
             ->all();
     }

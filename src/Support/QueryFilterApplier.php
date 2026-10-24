@@ -8,7 +8,6 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 class QueryFilterApplier
 {
     /**
-     * @param  EloquentBuilder|QueryBuilder  $query
      * @param  array<string, mixed>  $config
      */
     public static function apply(EloquentBuilder|QueryBuilder $query, array $config, string $table = ''): EloquentBuilder|QueryBuilder
@@ -44,7 +43,6 @@ class QueryFilterApplier
     }
 
     /**
-     * @param  EloquentBuilder|QueryBuilder  $query
      * @param  array<string, mixed>  $condition
      */
     protected static function applyCondition(EloquentBuilder|QueryBuilder $query, array $condition, string $table): void
@@ -74,13 +72,11 @@ class QueryFilterApplier
             }),
             'is_null' => $query->whereNull($column),
             'is_not_null' => $query->whereNotNull($column),
+            'on_date' => $query->whereDate($column, (string) $value),
             default => self::whereEqualsInsensitive($query, $column, $value),
         };
     }
 
-    /**
-     * @param  EloquentBuilder|QueryBuilder  $query
-     */
     protected static function whereEqualsInsensitive(EloquentBuilder|QueryBuilder $query, string $column, mixed $value): void
     {
         if (str_contains($column, '->')) {
@@ -93,9 +89,6 @@ class QueryFilterApplier
         $query->whereRaw("LOWER({$wrapped}) = ?", [strtolower((string) $value)]);
     }
 
-    /**
-     * @param  EloquentBuilder|QueryBuilder  $query
-     */
     protected static function whereNotEqualsInsensitive(EloquentBuilder|QueryBuilder $query, string $column, mixed $value): void
     {
         if (str_contains($column, '->')) {
@@ -108,9 +101,6 @@ class QueryFilterApplier
         $query->whereRaw("LOWER({$wrapped}) != ?", [strtolower((string) $value)]);
     }
 
-    /**
-     * @param  EloquentBuilder|QueryBuilder  $query
-     */
     protected static function wrapIdentifier(EloquentBuilder|QueryBuilder $query, string $column): string
     {
         $grammar = $query->getGrammar();

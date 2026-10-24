@@ -57,7 +57,7 @@ class VirtualJoinEnricher
             ->get()
             ->keyBy($foreignKey);
 
-        return array_map(function (array $row) use ($users, $localKey, $foreignKey): array {
+        return array_map(function (array $row) use ($users, $localKey): array {
             $userId = $row[$localKey] ?? null;
             $user = $userId !== null ? $users->get($userId) : null;
 

@@ -120,6 +120,13 @@
             return String(value ?? '');
         }
 
+        if (format === 'decimal') {
+            return number.toLocaleString(undefined, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+            });
+        }
+
         if (format === 'percent') {
             return number.toLocaleString(undefined, {
                 minimumFractionDigits: 0,
@@ -140,6 +147,25 @@
         return number.toLocaleString(undefined, {
             maximumFractionDigits: 0,
         });
+    };
+
+    window.spiggleSparklinePoints = function (values) {
+        const series = (values || []).map((value) => Number(value)).filter((value) => Number.isFinite(value));
+
+        if (series.length < 2) {
+            return '';
+        }
+
+        const min = Math.min(...series);
+        const max = Math.max(...series);
+        const span = max - min || 1;
+
+        return series.map((value, index) => {
+            const x = (index / (series.length - 1)) * 120;
+            const y = 32 - ((value - min) / span) * 28;
+
+            return x.toFixed(1) + ',' + y.toFixed(1);
+        }).join(' ');
     };
 
     window.spiggleApplyValueFormatters = function (options, payload, context = {}) {
@@ -986,6 +1012,62 @@
                 };
 
                 options = window.spiggleApplyChartVariant('line', variant, options, variantContext);
+
+            } else if (type === 'treemap') {
+
+                options.chart.type = 'treemap';
+
+                options.series = datasets.map((dataset) => ({
+
+                    name: dataset.label || 'Value',
+
+                    data: labels.map((label, index) => ({
+
+                        x: String(label),
+
+                        y: Number((dataset.data || [])[index] ?? 0),
+
+                    })),
+
+                }));
+
+                options.legend = { show: datasets.length > 1 };
+
+                options.dataLabels = {
+
+                    enabled: true,
+
+                    formatter: (text, op) => {
+
+                        const value = window.spiggleFormatValue(
+
+                            op?.value,
+
+                            payload.visual?.number_format,
+
+                            payload.visual?.currency,
+
+                        );
+
+                        return [text, value];
+
+                    },
+
+                    style: { fontSize: '12px' },
+
+                };
+
+                options.plotOptions = {
+
+                    treemap: {
+
+                        distributed: datasets.length < 2,
+
+                        enableShades: true,
+
+                    },
+
+                };
 
             } else {
 

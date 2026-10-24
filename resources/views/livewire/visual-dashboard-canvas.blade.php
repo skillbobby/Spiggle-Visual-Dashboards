@@ -30,6 +30,8 @@
         </div>
     </div>
 
+    @include('visual-dashboards::livewire.partials.dashboard-filters')
+
     @if ($items === [])
         <div class="vd-canvas-empty">
             <div class="vd-canvas-empty-icon" aria-hidden="true">📊</div>

@@ -17,5 +17,19 @@
         @else
             <p class="vd-muted">Same underlying data — only the chart presentation changes.</p>
         @endif
+
+        @if ($selectedVisual->type === 'radialbar')
+            <div class="vd-kpi-comparison-row">
+                <label class="vd-field">
+                    <span>Scale minimum</span>
+                    <input type="number" step="any" class="vd-input" wire:model.live.debounce.300ms="editGaugeMin" placeholder="0">
+                </label>
+                <label class="vd-field">
+                    <span>Scale maximum</span>
+                    <input type="number" step="any" class="vd-input" wire:model.live.debounce.300ms="editGaugeMax" placeholder="100">
+                </label>
+            </div>
+            <p class="vd-muted">Leave maximum empty to fit the value. A 0–100 scale suits rates.</p>
+        @endif
     </section>
 @endif

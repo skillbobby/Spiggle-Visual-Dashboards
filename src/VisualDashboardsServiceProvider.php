@@ -13,8 +13,6 @@ use Livewire\Livewire;
 use Spiggle\FormBuilder\Events\FormSubmitted;
 use Spiggle\VisualDashboards\Console\ExportDashboardCommand;
 use Spiggle\VisualDashboards\Console\ImportDashboardCommand;
-use Spiggle\VisualDashboards\Console\SeedChartGalleryCommand;
-use Spiggle\VisualDashboards\Console\SeedSampleDashboardsCommand;
 use Spiggle\VisualDashboards\Console\VerifyDashletCommand;
 use Spiggle\VisualDashboards\Livewire\DashboardGrid;
 use Spiggle\VisualDashboards\Livewire\PublicDashboardView;
@@ -113,8 +111,6 @@ class VisualDashboardsServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                SeedSampleDashboardsCommand::class,
-                SeedChartGalleryCommand::class,
                 VerifyDashletCommand::class,
                 ExportDashboardCommand::class,
                 ImportDashboardCommand::class,

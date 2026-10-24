@@ -22,6 +22,7 @@ class DashletFactory extends Factory
             'grid_y' => 0,
             'grid_w' => 4,
             'grid_h' => 4,
+            'grid_z' => 0,
             'config' => [
                 'title' => fake()->words(2, true),
                 'data_source' => 'sample_metrics',

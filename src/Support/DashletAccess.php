@@ -4,7 +4,10 @@ namespace Spiggle\VisualDashboards\Support;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
+use Spiggle\VisualDashboards\Models\Dashlet;
 
 class DashletAccess
 {
@@ -35,14 +38,49 @@ class DashletAccess
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public static function restrictedPayload(Dashlet $dashlet): array
+    {
+        $config = $dashlet->normalizedConfig();
+        $heading = (string) ($config['heading'] ?: $config['title'] ?: 'Visual');
+        $roles = self::stringList($config['access_roles'] ?? []);
+        $permissions = self::stringList($config['access_permissions'] ?? []);
+        $limits = [];
+
+        if ($roles !== []) {
+            $limits[] = implode(', ', $roles);
+        }
+
+        if ($permissions !== []) {
+            $limits[] = implode(', ', $permissions);
+        }
+
+        $who = $limits === [] ? 'selected roles' : implode(' and ', $limits);
+
+        return [
+            'id' => $dashlet->id,
+            'type' => $dashlet->type,
+            'title' => $heading,
+            'heading' => $heading,
+            'subheading' => '',
+            'restricted' => true,
+            'empty_message' => 'This visual stays on the dashboard. Your role cannot see its data. It is limited to '.$who.'.',
+            'visual' => [
+                'border' => true,
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function roleOptions(): array
     {
         $configured = self::configuredMap('dashlets.access.roles');
 
-        if (class_exists(\Spatie\Permission\Models\Role::class) && self::hasTable(config('permission.table_names.roles', 'roles'))) {
-            $roles = \Spatie\Permission\Models\Role::query()
+        if (class_exists(Role::class) && self::hasTable(config('permission.table_names.roles', 'roles'))) {
+            $roles = Role::query()
                 ->orderBy('name')
                 ->pluck('name', 'name')
                 ->all();
@@ -60,8 +98,8 @@ class DashletAccess
     {
         $configured = self::configuredMap('dashlets.access.permissions');
 
-        if (class_exists(\Spatie\Permission\Models\Permission::class) && self::hasTable(config('permission.table_names.permissions', 'permissions'))) {
-            $permissions = \Spatie\Permission\Models\Permission::query()
+        if (class_exists(Permission::class) && self::hasTable(config('permission.table_names.permissions', 'permissions'))) {
+            $permissions = Permission::query()
                 ->orderBy('name')
                 ->pluck('name', 'name')
                 ->all();
@@ -73,7 +111,6 @@ class DashletAccess
     }
 
     /**
-     * @param  mixed  $value
      * @return list<string>
      */
     protected static function stringList(mixed $value): array

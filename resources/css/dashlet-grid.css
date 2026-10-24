@@ -291,9 +291,32 @@
 }
 
 .dashlet-grid-item.is-active {
-    z-index: 3;
     outline: 2px solid rgb(245 158 11 / 0.65);
     outline-offset: 1px;
+}
+
+.dashlet-grid-item.is-stack-target {
+    outline: 2px dashed rgb(37 99 235);
+    outline-offset: 2px;
+}
+
+.dashlet-grid-item.is-behind {
+    box-shadow: none;
+}
+
+.dashlet-stack-badge {
+    position: absolute;
+    top: 0.45rem;
+    left: 50%;
+    z-index: 6;
+    transform: translateX(-50%);
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(15 23 42);
+    color: white;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    pointer-events: none;
 }
 
 .dashlet-grid.is-dragging {

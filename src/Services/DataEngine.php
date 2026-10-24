@@ -2,16 +2,16 @@
 
 namespace Spiggle\VisualDashboards\Services;
 
-use RuntimeException;
 use Spiggle\VisualDashboards\Contracts\DataSource;
 use Spiggle\VisualDashboards\DataSources\DatabaseTableDataSource;
 use Spiggle\VisualDashboards\DataSources\FileCsvDataSource;
 use Spiggle\VisualDashboards\DataSources\LiveApiDataSource;
 use Spiggle\VisualDashboards\Support\FeatureCatalog;
-use Spiggle\VisualDashboards\Support\QueryAggregator;
 use Spiggle\VisualDashboards\Support\KpiCardPresenter;
-use Spiggle\VisualDashboards\Support\RadialBarPresenter;
+use Spiggle\VisualDashboards\Support\ModelRelationshipIntrospector;
+use Spiggle\VisualDashboards\Support\QueryAggregator;
 use Spiggle\VisualDashboards\Support\QueryConfig;
+use Spiggle\VisualDashboards\Support\RadialBarPresenter;
 use Spiggle\VisualDashboards\Support\ValueFormatter;
 use Spiggle\VisualDashboards\Support\VirtualMeasures;
 use Spiggle\VisualDashboards\Support\VisualQueryBuilder;
@@ -35,11 +35,59 @@ class DataEngine
         $normalized = QueryConfig::normalize($config);
 
         return match ($normalized['source_kind']) {
-            'table' => app(DatabaseTableDataSource::class)->forTable((string) $normalized['table_name']),
+            'model' => $this->resolveModelSource($normalized),
+            'table' => $this->resolveTableSource($normalized),
             'api' => app(LiveApiDataSource::class)->configure($normalized['api']),
             'file' => app(FileCsvDataSource::class)->configure($normalized['file']),
             default => $this->resolve((string) ($normalized['data_source'] ?: 'sample_metrics')),
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function resolveModelSource(array $config): DataSource
+    {
+        $class = $this->modelClassFromConfig($config);
+
+        if ($class !== null) {
+            return app(DatabaseTableDataSource::class)->forModel($class);
+        }
+
+        return $this->resolve((string) ($config['data_source'] ?: 'sample_metrics'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function resolveTableSource(array $config): DataSource
+    {
+        $class = ModelRelationshipIntrospector::modelClassForTable((string) ($config['table_name'] ?? ''));
+
+        if ($class !== null) {
+            return app(DatabaseTableDataSource::class)->forModel($class);
+        }
+
+        return app(DatabaseTableDataSource::class)->forTable((string) ($config['table_name'] ?? ''));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function modelClassFromConfig(array $config): ?string
+    {
+        foreach ([
+            (string) ($config['data_source'] ?? ''),
+            (string) data_get($config, 'query.primary_source', ''),
+        ] as $key) {
+            $class = ModelRelationshipIntrospector::modelClassForSourceKey($key);
+
+            if ($class !== null) {
+                return $class;
+            }
+        }
+
+        return ModelRelationshipIntrospector::modelClassForTable((string) ($config['table_name'] ?? ''));
     }
 
     /**
@@ -297,28 +345,8 @@ class DataEngine
             ];
         }
 
-        if ($type === 'scatter') {
-            $labels = [];
-            $datasets = [];
-
-            foreach ($rows as $row) {
-                $label = (string) ($row[$x] ?? '');
-                $seriesKey = (string) ($row[$series] ?? 'Series');
-                $labels[$label] = $label;
-                $datasets[$seriesKey][$label] = (float) ($row[$y] ?? 0);
-            }
-
-            $labelList = array_values($labels);
-
-            return [
-                'labels' => $labelList,
-                'datasets' => array_map(function (array $points, string $label) use ($labelList): array {
-                    return [
-                        'label' => $label,
-                        'data' => array_map(static fn (string $axis): float => (float) ($points[$axis] ?? 0), $labelList),
-                    ];
-                }, $datasets, array_keys($datasets)),
-            ];
+        if ($series !== '') {
+            return $this->chartFromSeries($rows, $x, $y, $series);
         }
 
         return [
@@ -327,6 +355,40 @@ class DataEngine
                 'label' => $this->measureLabel($config, $y),
                 'data' => array_map(static fn (array $row): float => (float) ($row[$y] ?? 0), $rows),
             ]],
+        ];
+    }
+
+    /**
+     * Pivot rows into one dataset per series value, aligned on the category axis.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<string, mixed>
+     */
+    protected function chartFromSeries(array $rows, string $x, string $y, string $series): array
+    {
+        $labels = [];
+        $datasets = [];
+
+        foreach ($rows as $row) {
+            $label = (string) ($row[$x] ?? '');
+            $seriesKey = trim((string) ($row[$series] ?? ''));
+            $seriesKey = $seriesKey !== '' ? $seriesKey : 'Series';
+            $labels[$label] = $label;
+            $datasets[$seriesKey][$label] = (float) ($row[$y] ?? 0);
+        }
+
+        $labelList = array_values($labels);
+        sort($labelList);
+        ksort($datasets);
+
+        return [
+            'labels' => $labelList,
+            'datasets' => array_map(function (array $points, string $label) use ($labelList): array {
+                return [
+                    'label' => $label,
+                    'data' => array_map(static fn (string $axis): float => (float) ($points[$axis] ?? 0), $labelList),
+                ];
+            }, $datasets, array_keys($datasets)),
         ];
     }
 

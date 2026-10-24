@@ -18,6 +18,7 @@ class Dashlet extends Model
         'grid_y',
         'grid_w',
         'grid_h',
+        'grid_z',
         'config',
     ];
 
@@ -26,6 +27,7 @@ class Dashlet extends Model
         'grid_y' => 'integer',
         'grid_w' => 'integer',
         'grid_h' => 'integer',
+        'grid_z' => 'integer',
         'config' => 'array',
     ];
 

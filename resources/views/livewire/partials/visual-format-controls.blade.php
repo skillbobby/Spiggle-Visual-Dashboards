@@ -146,6 +146,18 @@
             <p class="vd-muted">Controls the border around the chart card on the canvas and in preview.</p>
         </div>
 
+        <div class="vd-format-section" x-show="tab === 'access'" x-cloak>
+            <p class="vd-muted">Leave every role unchecked to show the data to anyone who can open this dashboard. A viewer without a checked role still sees the card, with a note instead of the data.</p>
+            <div class="vd-access-roles">
+                @foreach ($this->accessRoleOptions() as $role => $label)
+                    <label class="vd-field vd-field-toggle">
+                        <span>{{ $label }}</span>
+                        <input type="checkbox" value="{{ $role }}" wire:model="editAccessRoles">
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
         <div class="vd-format-section" x-show="tab === 'kpi'" x-cloak>
             @include('visual-dashboards::livewire.partials.visual-kpi-properties', ['selectedVisual' => $selectedVisual])
         </div>

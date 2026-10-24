@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ReflectionClass;
+use Spiggle\DynamicFields\Services\ModelDiscoverer;
+use Spiggle\FormBuilder\Models\Form;
 use Spiggle\VisualDashboards\Contracts\DataSource;
 use Spiggle\VisualDashboards\DataSources\FormSubmissionDataSource;
 use Spiggle\VisualDashboards\Support\DataSourceDescriptor;
@@ -203,9 +205,9 @@ class VisualDashboardDataSourceRegistry
                 'data_source' => $descriptor->meta['registry_key'] ?? $key,
             ],
             'model' => [
-                'source_kind' => 'table',
+                'source_kind' => 'model',
                 'table_name' => $descriptor->meta['table'] ?? '',
-                'data_source' => 'table:'.$descriptor->meta['table'],
+                'data_source' => $key,
                 'columns' => $field ? [$field] : [],
             ],
             'filament_resource' => [
@@ -297,8 +299,8 @@ class VisualDashboardDataSourceRegistry
      */
     protected function modelClassMap(): array
     {
-        if (class_exists(\Spiggle\DynamicFields\Services\ModelDiscoverer::class)) {
-            return app(\Spiggle\DynamicFields\Services\ModelDiscoverer::class)->discover();
+        if (class_exists(ModelDiscoverer::class)) {
+            return app(ModelDiscoverer::class)->discover();
         }
 
         return $this->fallbackModelDiscovery();
@@ -400,7 +402,7 @@ class VisualDashboardDataSourceRegistry
      */
     protected function discoverFormBuilderForms(): array
     {
-        if (! class_exists(\Spiggle\FormBuilder\Models\Form::class)) {
+        if (! class_exists(Form::class)) {
             return [];
         }
 
@@ -412,7 +414,7 @@ class VisualDashboardDataSourceRegistry
 
         $descriptors = [];
 
-        \Spiggle\FormBuilder\Models\Form::query()
+        Form::query()
             ->orderBy('name')
             ->get(['id', 'name', 'slug'])
             ->each(function ($form) use (&$descriptors): void {
@@ -447,7 +449,7 @@ class VisualDashboardDataSourceRegistry
 
         foreach ($this->modelClassMap() as $class => $label) {
             try {
-                /** @var \Illuminate\Database\Eloquent\Model $instance */
+                /** @var Model $instance */
                 $instance = app($class);
                 $tables->push($instance->getTable());
             } catch (Throwable) {

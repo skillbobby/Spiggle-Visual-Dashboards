@@ -5,14 +5,17 @@
         saveDebounceMs: @js($saveDebounceMs),
         items: @js($items),
         presentationMode: @js($presentationMode ?? false),
+        canArrange: @js($canArrange ?? false),
     })"
     x-on:dashlet-grid-refresh.window="refreshFromServer()"
     x-on:dashlet-grid-refresh="refreshFromServer()"
     @class(['dashlet-grid-shell', 'dashlet-grid-presentation' => ($presentationMode ?? false)])
 >
-    <div class="dashlet-grid-toolbar" x-show="! presentationMode">
-        <p class="dashlet-grid-help">Drag card headers to reorder. Resize from the bottom-right handle. Cards wrap to the next row and never cover each other. Layout saves automatically.</p>
+    <div class="dashlet-grid-toolbar" x-show="! presentationMode || canArrange">
+        <p class="dashlet-grid-help">Drag a card and it snaps into the nearest gap. Drop it on another card to place it in front or behind.</p>
     </div>
+
+    @include('visual-dashboards::livewire.partials.dashboard-filters')
 
     @if ($items === [])
         <div class="dashlet-grid-empty">
@@ -28,16 +31,20 @@
                     :class="{
                         'has-border': item.payload?.visual?.border !== false,
                         'is-active': drag?.item?.id === item.id || resize?.item?.id === item.id,
+                        'is-stack-target': Number(drag?.stack?.id) === Number(item.id),
+                        'is-behind': drag?.item?.id === item.id && drag?.stack && ! drag.stack.inFront,
                         'is-hero': item.payload?.type === 'hero',
                         'is-stat-card': item.payload?.type === 'stat_card',
                     }"
+                    :data-dashlet-id="item.id"
                     :style="itemStyle(item)"
                 >
+                    <div class="dashlet-stack-badge" x-show="(drag?.item?.id === item.id && drag?.stack?.inFront) || (Number(drag?.stack?.id) === Number(item.id) && ! drag?.stack?.inFront)" x-text="drag?.stack?.inFront ? 'In front' : 'Behind'"></div>
                     <div
                         class="dashlet-grid-item-header"
                         x-show="item.payload?.type !== 'hero'"
-                        :class="{ 'is-readonly': presentationMode }"
-                        @mousedown="! presentationMode && startDrag($event, item)"
+                        :class="{ 'is-readonly': presentationMode && ! canArrange }"
+                        @mousedown="(! presentationMode || canArrange) && startDrag($event, item)"
                     >
                         <div class="dashlet-grid-item-titles">
                             <strong x-text="item.payload?.heading || item.payload?.title || 'Dashlet'"></strong>
@@ -76,7 +83,14 @@
                     </div>
 
                     <div class="dashlet-grid-item-body">
-                        <template x-if="item.payload?.type === 'hero'">
+                        <template x-if="item.payload?.restricted">
+                            <div class="vd-widget-empty">
+                                <div class="vd-widget-empty-icon" aria-hidden="true">🔒</div>
+                                <p x-text="item.payload?.empty_message"></p>
+                            </div>
+                        </template>
+
+                        <template x-if="! item.payload?.restricted && item.payload?.type === 'hero'">
                             <div class="dashlet-hero">
                                 <div class="dashlet-hero-row">
                                     <div class="dashlet-hero-copy">
@@ -95,7 +109,7 @@
                             </div>
                         </template>
 
-                        <template x-if="item.payload?.type === 'stat_card'">
+                        <template x-if="! item.payload?.restricted && item.payload?.type === 'stat_card'">
                             <div class="dashlet-stat-card">
                                 @include('visual-dashboards::livewire.partials.dashlet-kpi-card-alpine')
                                 <div
@@ -106,7 +120,7 @@
                             </div>
                         </template>
 
-                        <template x-if="item.payload?.type === 'insight_list'">
+                        <template x-if="! item.payload?.restricted && item.payload?.type === 'insight_list'">
                             <div class="dashlet-insights">
                                 <template x-for="(insight, index) in item.payload.items || []" :key="index">
                                     <article class="dashlet-insight">
@@ -121,7 +135,7 @@
                             </div>
                         </template>
 
-                        <template x-if="item.payload?.type === 'table'">
+                        <template x-if="! item.payload?.restricted && item.payload?.type === 'table'">
                             <div class="dashlet-table-wrap">
                                 <table class="dashlet-table">
                                     <thead>
@@ -152,7 +166,7 @@
                             </div>
                         </template>
 
-                        <template x-if="isChartType(item.payload?.type)">
+                        <template x-if="! item.payload?.restricted && isChartType(item.payload?.type)">
                             <div class="dashlet-chart-wrap" :class="{ 'has-center': item.payload?.center }" wire:ignore>
                                 <div class="dashlet-chart-host" x-effect="renderChart($el, item.payload)"></div>
                                 <div class="dashlet-donut-center" x-show="item.payload?.center">
@@ -175,7 +189,7 @@
                             </div>
                         </template>
 
-                        <template x-if="item.payload?.type === 'container'">
+                        <template x-if="! item.payload?.restricted && item.payload?.type === 'container'">
                             <div class="dashlet-container-placeholder">Container dashlets render nested children (Pro).</div>
                         </template>
                     </div>
@@ -198,13 +212,17 @@
 @endif
 @endassets
 
+@include('visual-dashboards::livewire.partials.layout-snap-script')
+@include('visual-dashboards::livewire.partials.visual-chart-renderer-script')
+
 @script
 <script>
-    Alpine.data('dashletGrid', ({ columns, cellHeight, saveDebounceMs, items, presentationMode = false }) => ({
+    Alpine.data('dashletGrid', ({ columns, cellHeight, saveDebounceMs, items, presentationMode = false, canArrange = false }) => ({
         columns,
         cellHeight,
         saveDebounceMs,
         presentationMode,
+        canArrange,
         items: Array.isArray(items) ? items : [],
         drag: null,
         resize: null,
@@ -235,7 +253,7 @@
             const w = Math.max(2, Math.min(this.columns, Number(item.w) || 2));
             const h = Math.max(2, Number(item.h) || 2);
 
-            return `grid-column: ${x + 1} / span ${w}; grid-row: ${y + 1} / span ${h};`;
+            return `grid-column: ${x + 1} / span ${w}; grid-row: ${y + 1} / span ${h}; z-index: ${this.itemZIndex(item)};`;
         },
 
         tableColumns(payload) {
@@ -285,30 +303,84 @@
             return { x: 0, y: 0, w: width, h: height };
         },
 
-        resolveItems(items) {
-            const placed = [];
-
-            items.forEach((item) => {
-                const width = Math.max(2, Math.min(this.columns, Number(item.w) || 2));
-                const height = Math.max(2, Number(item.h) || 2);
-                const candidate = {
-                    ...item,
-                    x: Math.max(0, Number(item.x) || 0),
-                    y: Math.max(0, Number(item.y) || 0),
-                    w: width,
-                    h: height,
-                };
-
-                if (candidate.x + width > this.columns || this.overlapsAny(candidate, placed)) {
-                    const slot = this.firstFreeSlot(candidate, placed);
-                    candidate.x = slot.x;
-                    candidate.y = slot.y;
+        itemZIndex(item) {
+            if (this.drag?.item && Number(this.drag.item.id) === Number(item.id)) {
+                if (this.drag.stack) {
+                    return this.drag.stack.inFront ? 80 : 1;
                 }
 
-                placed.push(candidate);
+                return 40;
+            }
+
+            return (Number(item.z) || 0) + 2;
+        },
+
+        restoreDragSnapshot() {
+            if (! this.drag?.snapshot) {
+                return;
+            }
+
+            const byId = new Map(this.drag.snapshot.map((entry) => [Number(entry.id), entry]));
+
+            this.items.forEach((entry) => {
+                if (Number(entry.id) === Number(this.drag.item.id)) {
+                    return;
+                }
+
+                const snap = byId.get(Number(entry.id));
+
+                if (! snap) {
+                    return;
+                }
+
+                entry.x = snap.x;
+                entry.y = snap.y;
+                entry.z = snap.z;
+            });
+        },
+
+        stackTarget(item) {
+            let best = null;
+            let bestArea = 0;
+
+            this.items.forEach((other) => {
+                if (Number(other.id) === Number(item.id) || ! this.collides(item, other)) {
+                    return;
+                }
+
+                const width = Math.max(0, Math.min(item.x + item.w, other.x + other.w) - Math.max(item.x, other.x));
+                const height = Math.max(0, Math.min(item.y + item.h, other.y + other.h) - Math.max(item.y, other.y));
+                const area = width * height;
+
+                if (area > bestArea) {
+                    best = other;
+                    bestArea = area;
+                }
             });
 
-            return placed;
+            if (! best || bestArea < Math.min(item.w * item.h, best.w * best.h) * 0.5) {
+                return null;
+            }
+
+            const element = this.$el.querySelector(`[data-dashlet-id="${Number(best.id)}"]`);
+
+            return {
+                item: best,
+                rect: element?.getBoundingClientRect?.() || null,
+            };
+        },
+
+        resolveItems(items) {
+            const placed = items.map((item) => ({
+                ...item,
+                x: Math.max(0, Number(item.x) || 0),
+                y: Math.max(0, Number(item.y) || 0),
+                w: Math.max(2, Math.min(this.columns, Number(item.w) || 2)),
+                h: Math.max(2, Number(item.h) || 2),
+                z: Number(item.z) || 0,
+            }));
+
+            return window.spigglePackLayout(placed, this.columns, null);
         },
 
         canPlace(item, x, y, w, h) {
@@ -341,6 +413,13 @@
                 startY: event.clientY,
                 originX: Number(item.x) || 0,
                 originY: Number(item.y) || 0,
+                stack: null,
+                snapshot: this.items.map((entry) => ({
+                    id: Number(entry.id),
+                    x: Number(entry.x) || 0,
+                    y: Number(entry.y) || 0,
+                    z: Number(entry.z) || 0,
+                })),
             };
 
             window.addEventListener('mousemove', this._onDrag);
@@ -357,11 +436,31 @@
             const deltaY = Math.round((event.clientY - this.drag.startY) / this.cellHeight);
             const nextX = Math.max(0, Math.min(this.columns - (this.drag.item.w || 2), this.drag.originX + deltaX));
             const nextY = Math.max(0, this.drag.originY + deltaY);
+            const item = this.drag.item;
 
-            if (this.canPlace(this.drag.item, nextX, nextY, this.drag.item.w || 2, this.drag.item.h || 2)) {
-                this.drag.item.x = nextX;
-                this.drag.item.y = nextY;
+            this.restoreDragSnapshot();
+            item.x = nextX;
+            item.y = nextY;
+
+            const target = this.stackTarget(item);
+
+            if (target) {
+                const inFront = ! target.rect || event.clientY < target.rect.top + (target.rect.height / 2);
+                this.drag.stack = { id: Number(target.item.id), inFront };
+
+                if (inFront) {
+                    item.z = (Number(target.item.z) || 0) + 1;
+                } else {
+                    item.z = Number(target.item.z) || 0;
+                    target.item.z = item.z + 1;
+                }
+
+                return;
             }
+
+            this.drag.stack = null;
+            item.z = 0;
+            window.spigglePackLayout(this.items, this.columns, Number(item.id));
         },
 
         endDrag() {
@@ -433,6 +532,7 @@
                     y: Number(item.y) || 0,
                     w: Number(item.w) || 2,
                     h: Number(item.h) || 2,
+                    z: Number(item.z) || 0,
                 }));
 
                 const nextItems = await $wire.updateLayout(payload);
@@ -467,11 +567,11 @@
         },
 
         renderChart(host, payload, attempt = 0) {
-            if (! host || ! payload) {
+            if (! host || ! payload || payload.restricted || ! payload.chart) {
                 return;
             }
 
-            if (! window.ApexCharts) {
+            if (! window.ApexCharts || typeof window.spiggleRenderDashletChart !== 'function') {
                 if (attempt < 40) {
                     window.setTimeout(() => this.renderChart(host, payload, attempt + 1), 50);
                 }
@@ -479,67 +579,9 @@
                 return;
             }
 
-            const chartId = payload.id || host;
-
-            if (this.charts[chartId] && typeof this.charts[chartId].destroy === 'function') {
-                this.charts[chartId].destroy();
-            }
-
-            host.innerHTML = '';
-            this.charts[chartId] = this.renderApex(host, payload);
-        },
-
-        renderApex(host, payload) {
-            const radial = ['pie', 'donut'].includes(payload.type);
-            const scatter = payload.type === 'scatter' || Boolean(payload.chart?.scatter);
-            const stacked = Boolean(payload.chart?.stacked) || payload.type === 'stacked_column';
-            const datasets = payload.chart?.datasets || [];
-            const labels = payload.chart?.labels || [];
-            const color = payload.visual?.color || '#f59e0b';
-            const palette = payload.chart?.colors || [color, '#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#64748b'];
-            const typeMap = {
-                column: 'bar',
-                stacked_column: 'bar',
-                bar: 'bar',
-                line: 'line',
-                pie: 'pie',
-                donut: 'donut',
-                scatter: 'scatter',
-            };
-
-            const options = {
-                chart: {
-                    type: scatter ? 'scatter' : (typeMap[payload.type] || 'bar'),
-                    height: host.clientHeight || 260,
-                    stacked,
-                    toolbar: { show: false },
-                    fontFamily: 'inherit',
-                    animations: { enabled: false },
-                },
-                colors: palette,
-                labels: radial ? labels : undefined,
-                series: radial
-                    ? (datasets[0]?.data || []).map((value) => Number(value))
-                    : datasets.map((dataset) => ({ name: dataset.label, data: dataset.data })),
-                xaxis: radial ? undefined : {
-                    categories: scatter ? undefined : labels,
-                    type: scatter ? 'numeric' : undefined,
-                    title: { text: payload.visual?.x_label || '' },
-                },
-                yaxis: radial ? undefined : { title: { text: payload.visual?.y_label || '' } },
-                legend: { show: radial || datasets.length > 1, position: 'bottom' },
-                dataLabels: { enabled: false },
-                stroke: { width: payload.type === 'line' ? 3 : scatter ? 0 : 0 },
-                plotOptions: {
-                    bar: { horizontal: payload.type === 'bar', borderRadius: 6, columnWidth: '55%' },
-                    pie: { donut: { size: payload.type === 'donut' ? '68%' : '62%' } },
-                },
-            };
-
-            const chart = new ApexCharts(host, options);
-            chart.render();
-
-            return chart;
+            window.spiggleRenderDashletChart(host, payload, (chart) => {
+                this.charts[payload.id || host] = chart;
+            });
         },
 
         renderSpark(host, payload) {

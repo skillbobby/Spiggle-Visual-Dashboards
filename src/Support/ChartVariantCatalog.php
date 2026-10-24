@@ -56,6 +56,9 @@ class ChartVariantCatalog
                 'semi_circle' => 'Semi-circle',
                 'live_needle' => 'Live needle',
             ],
+            'treemap' => [
+                'basic' => 'Basic treemap',
+            ],
             default => [],
         };
     }
@@ -74,6 +77,7 @@ class ChartVariantCatalog
             'stacked_column',
             'funnel',
             'radialbar',
+            'treemap',
         ];
     }
 

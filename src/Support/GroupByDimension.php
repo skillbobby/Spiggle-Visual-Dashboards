@@ -8,7 +8,7 @@ class GroupByDimension
 {
     public static function isTemporal(string $field): bool
     {
-        return preg_match('/(_at|_date|date)$/i', $field) === 1;
+        return preg_match('/(_at|_on|_date|date)$/i', $field) === 1;
     }
 
     public static function isForeignKey(string $field): bool

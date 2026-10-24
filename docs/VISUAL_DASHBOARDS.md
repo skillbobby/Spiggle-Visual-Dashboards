@@ -4,9 +4,9 @@ Visual Dashboards is a single private package (`spiggle/visual-dashboards`). The
 
 ## Flow
 
-The Filament sidebar shows one **Visual Dashboards** item. Overview, the dashboard list, and the AI screens are on that section's menu.
+The Filament sidebar shows one **Visual Dashboards** item, which opens the dashboard list. AI spend records are application data and are not part of this package's menu.
 
-1. **Create dashboard** — name, slug, heading, description; optional public link and viewer roles (public link is off by default)
+1. **Create dashboard** — a single name card. Slug and heading are filled from the name. Public link and viewer roles stay on the edit page (public link is off by default)
 2. **Design canvas** — redirected to `ViewCustomDashboard` after create
 3. **Insert visual** — chart gallery slide-over
 4. **Configure** — data bindings with a live preview, then optional style

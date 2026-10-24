@@ -3,6 +3,49 @@
         <h4 class="vd-transform-heading">KPI appearance</h4>
 
         <label class="vd-field">
+            <span>Value suffix</span>
+            <input type="text" wire:model.live.debounce.300ms="editKpiValueSuffix" class="vd-input" placeholder="Days">
+            <p class="vd-muted">Shown beside the number, for example Days.</p>
+        </label>
+
+        <div class="vd-kpi-comparison-row">
+            <label class="vd-field">
+                <span>Sparkline column</span>
+                <input type="text" wire:model.live.debounce.300ms="editKpiSparklineField" class="vd-input" placeholder="admitted_on">
+                <p class="vd-muted">Date column used to draw the trend. Leave blank to hide it.</p>
+            </label>
+            <label class="vd-field">
+                <span>Sparkline grain</span>
+                <select wire:model.live="editKpiSparklineGrain" class="vd-input">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
+            </label>
+        </div>
+
+        <fieldset class="vd-field">
+            <span>Supporting figures</span>
+            <p class="vd-muted">Extra totals from the same rows, shown under the headline number.</p>
+            @foreach ($editKpiSupporting as $index => $support)
+                <div class="vd-kpi-comparison-row">
+                    <input type="text" class="vd-input" wire:model="editKpiSupporting.{{ $index }}.label" placeholder="Occupied">
+                    <select class="vd-input" wire:model="editKpiSupporting.{{ $index }}.fn">
+                        <option value="COUNT">Count</option>
+                        <option value="SUM">Sum</option>
+                        <option value="AVG">Average</option>
+                        <option value="MIN">Min</option>
+                        <option value="MAX">Max</option>
+                    </select>
+                    <input type="text" class="vd-input" wire:model="editKpiSupporting.{{ $index }}.field" placeholder="*">
+                    <button type="button" class="vd-btn vd-btn-muted" wire:click="removeKpiSupporting({{ $index }})">Remove</button>
+                </div>
+            @endforeach
+            <button type="button" class="vd-btn vd-btn-muted" wire:click="addKpiSupporting">Add supporting figure</button>
+        </fieldset>
+
+        <label class="vd-field">
             <span>Metric label</span>
             <input type="text" wire:model.live.debounce.300ms="editKpiMetricLabel" class="vd-input" placeholder="Total submissions">
             <p class="vd-muted">Shown inside the card (e.g. Total Balance). The card heading above stays as the widget title.</p>

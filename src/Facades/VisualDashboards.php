@@ -12,8 +12,8 @@ use Spiggle\VisualDashboards\Services\DataEngine;
  * @method static array<string, mixed> chart(string $sourceKey, string $type, array $filters = [])
  * @method static array<string, string> dataSourceLabels()
  *
- * @see \Spiggle\VisualDashboards\Services\DataEngine
- * @see \Spiggle\VisualDashboards\Services\DashletRegistry
+ * @see DataEngine
+ * @see DashletRegistry
  */
 class VisualDashboards extends Facade
 {

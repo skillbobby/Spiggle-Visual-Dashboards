@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
+use Spiggle\DynamicFields\Services\ModelDiscoverer;
 use Throwable;
 
 class ModelRelationshipIntrospector
@@ -183,8 +184,8 @@ class ModelRelationshipIntrospector
 
     public static function modelClassForTable(string $table): ?string
     {
-        if (class_exists(\Spiggle\DynamicFields\Services\ModelDiscoverer::class)) {
-            foreach (app(\Spiggle\DynamicFields\Services\ModelDiscoverer::class)->discover() as $class => $label) {
+        if (class_exists(ModelDiscoverer::class)) {
+            foreach (app(ModelDiscoverer::class)->discover() as $class => $label) {
                 try {
                     if (app($class)->getTable() === $table) {
                         return $class;

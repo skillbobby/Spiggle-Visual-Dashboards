@@ -10,7 +10,7 @@
 
     <div class="dashlet-grid-toolbar">
 
-        <p class="dashlet-grid-help">Drag headers to move visuals. Resize from the bottom-right handle. Use Edit on a card to configure it.</p>
+        <p class="dashlet-grid-help">Drag a card and it snaps into the nearest gap. Drop it on another card to place it in front or behind.</p>
 
     </div>
 
@@ -30,6 +30,10 @@
 
                     'is-active': drag?.item?.id === item.id || resize?.item?.id === item.id,
 
+                    'is-stack-target': Number(drag?.stack?.id) === Number(item.id),
+
+                    'is-behind': drag?.item?.id === item.id && drag?.stack && ! drag.stack.inFront,
+
                     'is-selected': Number(selectedVisualId) === Number(item.id),
 
                     'is-stat-card': item.payload?.type === 'stat_card',
@@ -38,9 +42,13 @@
 
                 }"
 
+                :data-dashlet-id="item.id"
+
                 :style="itemStyle(item)"
 
             >
+
+                <div class="dashlet-stack-badge" x-show="(drag?.item?.id === item.id && drag?.stack?.inFront) || (Number(drag?.stack?.id) === Number(item.id) && ! drag?.stack?.inFront)" x-text="drag?.stack?.inFront ? 'In front' : 'Behind'"></div>
 
                 <div
 
@@ -126,7 +134,25 @@
 
                         class="vd-widget-empty"
 
-                        x-show="isUnconfigured(item)"
+                        x-show="item.payload?.restricted"
+
+                        x-cloak
+
+                    >
+
+                        <div class="vd-widget-empty-icon" aria-hidden="true">🔒</div>
+
+                        <p x-text="item.payload?.empty_message"></p>
+
+                    </div>
+
+
+
+                    <div
+
+                        class="vd-widget-empty"
+
+                        x-show="isUnconfigured(item) && ! item.payload?.restricted"
 
                         x-cloak
 
@@ -164,7 +190,7 @@
 
                         class="dashlet-stat-card"
 
-                        x-show="! isUnconfigured(item) && item.payload?.type === 'stat_card'"
+                        x-show="! isUnconfigured(item) && ! item.payload?.restricted && item.payload?.type === 'stat_card'"
 
                         x-cloak
 
@@ -180,7 +206,7 @@
 
                         class="dashlet-table-wrap"
 
-                        x-show="! isUnconfigured(item) && item.payload?.type === 'table'"
+                        x-show="! isUnconfigured(item) && ! item.payload?.restricted && item.payload?.type === 'table'"
 
                         x-cloak
 
@@ -230,7 +256,7 @@
 
                         class="dashlet-chart-wrap"
 
-                        x-show="! isUnconfigured(item) && isChartType(item.payload?.type)"
+                        x-show="! isUnconfigured(item) && ! item.payload?.restricted && isChartType(item.payload?.type)"
 
                         x-cloak
 

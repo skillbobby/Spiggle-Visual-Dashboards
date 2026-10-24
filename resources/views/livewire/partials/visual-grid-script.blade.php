@@ -1,3 +1,4 @@
+@include('visual-dashboards::livewire.partials.layout-snap-script')
 @script
 <script>
     Alpine.data('visualDashboardCanvas', ({ columns, cellHeight, saveDebounceMs, items, selectedVisualId = null }) => ({
@@ -39,7 +40,74 @@
             const w = Math.max(2, Math.min(this.columns, Number(item.w) || 2));
             const h = Math.max(2, Number(item.h) || 2);
 
-            return `grid-column: ${x + 1} / span ${w}; grid-row: ${y + 1} / span ${h};`;
+            return `grid-column: ${x + 1} / span ${w}; grid-row: ${y + 1} / span ${h}; z-index: ${this.itemZIndex(item)};`;
+        },
+
+        itemZIndex(item) {
+            if (this.drag?.item && Number(this.drag.item.id) === Number(item.id)) {
+                if (this.drag.stack) {
+                    return this.drag.stack.inFront ? 80 : 1;
+                }
+
+                return 40;
+            }
+
+            return (Number(item.z) || 0) + 2;
+        },
+
+        restoreDragSnapshot() {
+            if (! this.drag?.snapshot) {
+                return;
+            }
+
+            const byId = new Map(this.drag.snapshot.map((entry) => [Number(entry.id), entry]));
+
+            this.items.forEach((entry) => {
+                if (Number(entry.id) === Number(this.drag.item.id)) {
+                    return;
+                }
+
+                const snap = byId.get(Number(entry.id));
+
+                if (! snap) {
+                    return;
+                }
+
+                entry.x = snap.x;
+                entry.y = snap.y;
+                entry.z = snap.z;
+            });
+        },
+
+        stackTarget(item) {
+            let best = null;
+            let bestArea = 0;
+
+            this.items.forEach((other) => {
+                if (Number(other.id) === Number(item.id) || ! this.collides(item, other)) {
+                    return;
+                }
+
+                const width = Math.max(0, Math.min(item.x + item.w, other.x + other.w) - Math.max(item.x, other.x));
+                const height = Math.max(0, Math.min(item.y + item.h, other.y + other.h) - Math.max(item.y, other.y));
+                const area = width * height;
+
+                if (area > bestArea) {
+                    best = other;
+                    bestArea = area;
+                }
+            });
+
+            if (! best || bestArea < Math.min(item.w * item.h, best.w * best.h) * 0.5) {
+                return null;
+            }
+
+            const element = this.$el.querySelector(`[data-dashlet-id="${Number(best.id)}"]`);
+
+            return {
+                item: best,
+                rect: element?.getBoundingClientRect?.() || null,
+            };
         },
 
         chartVariantSignature(type, payload) {
@@ -180,6 +248,7 @@
                 Number(item.y) || 0,
                 Number(item.w) || 2,
                 Number(item.h) || 2,
+                Number(item.z) || 0,
                 this.chartDataSignature(item.payload),
             ].join('|');
         },
@@ -197,16 +266,13 @@
                     y: Math.max(0, Number(item.y) || 0),
                     w: width,
                     h: height,
+                    z: Number(item.z) || 0,
                 };
-
-                if (candidate.x + width > this.columns || this.overlapsAny(candidate, placed)) {
-                    const slot = this.firstFreeSlot(candidate, placed);
-                    candidate.x = slot.x;
-                    candidate.y = slot.y;
-                }
 
                 placed.push(candidate);
             });
+
+            window.spigglePackLayout(placed, this.columns, null);
 
             return placed.map((candidate) => {
                 const existing = existingById.get(Number(candidate.id));
@@ -266,6 +332,13 @@
                 originY: Number(item.y) || 0,
                 originW: Number(item.w) || 2,
                 originH: Number(item.h) || 2,
+                stack: null,
+                snapshot: this.items.map((entry) => ({
+                    id: Number(entry.id),
+                    x: Number(entry.x) || 0,
+                    y: Number(entry.y) || 0,
+                    z: Number(entry.z) || 0,
+                })),
             };
 
             window.addEventListener('mousemove', this._onDrag);
@@ -282,11 +355,31 @@
             const deltaY = Math.round((event.clientY - this.drag.startY) / this.cellHeight);
             const nextX = Math.max(0, Math.min(this.columns - (this.drag.item.w || 2), this.drag.originX + deltaX));
             const nextY = Math.max(0, this.drag.originY + deltaY);
+            const item = this.drag.item;
 
-            if (this.canPlace(this.drag.item, nextX, nextY, this.drag.item.w || 2, this.drag.item.h || 2)) {
-                this.drag.item.x = nextX;
-                this.drag.item.y = nextY;
+            this.restoreDragSnapshot();
+            item.x = nextX;
+            item.y = nextY;
+
+            const target = this.stackTarget(item);
+
+            if (target) {
+                const inFront = ! target.rect || event.clientY < target.rect.top + (target.rect.height / 2);
+                this.drag.stack = { id: Number(target.item.id), inFront };
+
+                if (inFront) {
+                    item.z = (Number(target.item.z) || 0) + 1;
+                } else {
+                    item.z = Number(target.item.z) || 0;
+                    target.item.z = item.z + 1;
+                }
+
+                return;
             }
+
+            this.drag.stack = null;
+            item.z = 0;
+            window.spigglePackLayout(this.items, this.columns, Number(item.id));
         },
 
         endDrag() {
@@ -295,12 +388,17 @@
             }
 
             const item = this.drag.item;
-            const moved = Number(item.x) !== this.drag.originX
-                || Number(item.y) !== this.drag.originY
-                || Number(item.w) !== this.drag.originW
-                || Number(item.h) !== this.drag.originH;
+            const moved = this.drag.snapshot.some((entry) => {
+                const current = this.items.find((candidate) => Number(candidate.id) === Number(entry.id));
 
-            if (moved) {
+                return ! current
+                    || Number(current.x) !== entry.x
+                    || Number(current.y) !== entry.y
+                    || Number(current.z) !== entry.z
+                    || Number(current.w) !== (Number(item.id) === Number(entry.id) ? this.drag.originW : Number(current.w));
+            });
+
+            if (moved || this.drag.stack) {
                 this.items = this.resolveItems(this.items);
                 this.queuePersistLayout();
             }
@@ -379,6 +477,7 @@
                     y: Number(item.y) || 0,
                     w: Number(item.w) || 2,
                     h: Number(item.h) || 2,
+                    z: Number(item.z) || 0,
                 }));
 
                 const nextItems = await $wire.updateLayout(payload, true);
@@ -395,7 +494,7 @@
         },
 
         renderChart(host, payload) {
-            if (! host || ! payload || payload?.unconfigured) {
+            if (! host || ! payload || payload?.unconfigured || payload?.restricted) {
                 return;
             }
 

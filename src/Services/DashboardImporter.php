@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
 use Spiggle\VisualDashboards\Models\Dashlet;
-use Spiggle\VisualDashboards\Services\LayoutManager;
 use Spiggle\VisualDashboards\Support\FeatureCatalog;
 
 class DashboardImporter
@@ -73,6 +72,7 @@ class DashboardImporter
                 'grid_y' => (int) ($definition['grid_y'] ?? 0),
                 'grid_w' => (int) ($definition['grid_w'] ?? 4),
                 'grid_h' => (int) ($definition['grid_h'] ?? 4),
+                'grid_z' => (int) ($definition['grid_z'] ?? 0),
                 'config' => is_array($definition['config'] ?? null) ? $definition['config'] : [],
             ]);
         }
@@ -85,6 +85,7 @@ class DashboardImporter
                 'y' => $dashlet->grid_y,
                 'w' => $dashlet->grid_w,
                 'h' => $dashlet->grid_h,
+                'z' => (int) $dashlet->grid_z,
             ])
             ->all();
 
@@ -128,6 +129,7 @@ class DashboardImporter
             'dashlets.*.grid_y' => ['nullable', 'integer', 'min:0'],
             'dashlets.*.grid_w' => ['nullable', 'integer', 'min:1'],
             'dashlets.*.grid_h' => ['nullable', 'integer', 'min:1'],
+            'dashlets.*.grid_z' => ['nullable', 'integer'],
             'dashlets.*.config' => ['nullable', 'array'],
         ])->validate();
     }

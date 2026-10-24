@@ -114,5 +114,4 @@ class SampleMetricsDataSource extends BaseDataSource
             return false;
         }));
     }
-
 }

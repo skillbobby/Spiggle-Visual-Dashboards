@@ -2,7 +2,6 @@
 
 namespace Spiggle\VisualDashboards\Services;
 
-use Illuminate\Support\Str;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
 use Spiggle\VisualDashboards\Models\Dashlet;
 
@@ -31,6 +30,7 @@ class DashboardExporter
                     'grid_y' => $dashlet->grid_y,
                     'grid_w' => $dashlet->grid_w,
                     'grid_h' => $dashlet->grid_h,
+                    'grid_z' => $dashlet->grid_z,
                     'config' => $dashlet->normalizedConfig(),
                 ])
                 ->values()

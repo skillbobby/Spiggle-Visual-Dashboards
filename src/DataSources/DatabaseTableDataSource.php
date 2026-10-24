@@ -2,9 +2,13 @@
 
 namespace Spiggle\VisualDashboards\DataSources;
 
+use BackedEnum;
+use DateTimeInterface;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Spiggle\VisualDashboards\Support\ModelRelationshipIntrospector;
 use Spiggle\VisualDashboards\Support\QueryConfig;
 use Spiggle\VisualDashboards\Support\QueryFilterApplier;
 
@@ -21,12 +25,26 @@ class DatabaseTableDataSource extends BaseDataSource
         'two_factor_confirmed_at',
     ];
 
-    public function __construct(protected ?string $table = null) {}
+    public function __construct(
+        protected ?string $table = null,
+        protected ?string $modelClass = null,
+    ) {}
 
     public function forTable(string $table): static
     {
         $clone = clone $this;
         $clone->table = $table;
+        $clone->modelClass = null;
+
+        return $clone;
+    }
+
+    public function forModel(string $modelClass): static
+    {
+        /** @var Model $model */
+        $model = new $modelClass;
+        $clone = $this->forTable($model->getTable());
+        $clone->modelClass = $modelClass;
 
         return $clone;
     }
@@ -82,6 +100,12 @@ class DatabaseTableDataSource extends BaseDataSource
      */
     public function previewRows(array $config = [], int $limit = 25): array
     {
+        $modelClass = $this->modelClass ?? ModelRelationshipIntrospector::modelClassForTable((string) $this->table);
+
+        if ($modelClass !== null) {
+            return $this->previewModelRows($modelClass, $config, $limit);
+        }
+
         $table = $this->safeTable();
 
         if ($table === null) {
@@ -111,6 +135,103 @@ class DatabaseTableDataSource extends BaseDataSource
             ->all();
 
         return $this->finalizeRows($rows, $config);
+    }
+
+    /**
+     * @param  class-string<Model>  $modelClass
+     * @param  array<string, mixed>  $config
+     * @return array<int, array<string, mixed>>
+     */
+    protected function previewModelRows(string $modelClass, array $config, int $limit): array
+    {
+        /** @var Model $model */
+        $model = new $modelClass;
+        $normalized = QueryConfig::normalize($config);
+        $groups = is_array($normalized['filter_groups'] ?? null) ? $normalized['filter_groups'] : [];
+        $conditions = is_array($groups['conditions'] ?? null) ? $groups['conditions'] : [];
+        $local = [];
+        $related = [];
+
+        foreach ($conditions as $condition) {
+            if (! is_array($condition)) {
+                continue;
+            }
+
+            $field = (string) ($condition['field'] ?? '');
+
+            if (str_contains($field, '.')) {
+                $related[] = $condition;
+            } else {
+                $local[] = $condition;
+            }
+        }
+
+        $localConfig = $normalized;
+        $localConfig['filter_groups']['conditions'] = $local;
+        $query = $model->newQuery();
+        $this->applyWindow($query, $localConfig, $model->getTable());
+        QueryFilterApplier::apply($query, $localConfig, $model->getTable());
+
+        foreach ($related as $condition) {
+            [$relation, $column] = explode('.', (string) $condition['field'], 2);
+
+            if ($relation === '' || $column === '' || ! method_exists($model, $relation)) {
+                continue;
+            }
+
+            $operator = (string) ($condition['operator'] ?? 'equals');
+            $value = $condition['value'] ?? null;
+            $query->whereHas($relation, function ($relatedQuery) use ($column, $operator, $value): void {
+                if ($operator === 'on_date') {
+                    $relatedQuery->whereDate($column, (string) $value);
+
+                    return;
+                }
+
+                $relatedQuery->where($column, $value);
+            });
+        }
+
+        $rows = $query
+            ->orderByDesc($model->getKeyName())
+            ->limit($limit)
+            ->get()
+            ->map(fn (Model $record): array => $this->chartAttributes($record))
+            ->all();
+
+        return $this->finalizeRows($rows, $config);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function chartAttributes(Model $model): array
+    {
+        $casts = $model->getCasts();
+        $row = [];
+
+        foreach (array_keys($model->getAttributes()) as $key) {
+            if (in_array($key, $this->hiddenColumns, true)) {
+                continue;
+            }
+
+            $value = $model->getAttribute($key);
+            $cast = (string) ($casts[$key] ?? '');
+
+            if ($value instanceof BackedEnum) {
+                $value = $value->value;
+            } elseif ($value instanceof DateTimeInterface) {
+                $value = str_contains($cast, 'datetime') || str_contains($cast, 'timestamp')
+                    ? $value->format('Y-m-d H:i:s')
+                    : $value->format('Y-m-d');
+            } elseif (is_bool($value)) {
+                $value = $value ? 1 : 0;
+            }
+
+            $row[$key] = $value;
+        }
+
+        return $row;
     }
 
     /**
@@ -217,7 +338,7 @@ class DatabaseTableDataSource extends BaseDataSource
         }
 
         // Tables discovered via Models / Filament / Tables registry are model-backed or explicitly listed.
-        return \Spiggle\VisualDashboards\Support\ModelRelationshipIntrospector::modelClassForTable($table) !== null
+        return ModelRelationshipIntrospector::modelClassForTable($table) !== null
             ? $table
             : null;
     }

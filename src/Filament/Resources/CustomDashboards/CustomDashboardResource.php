@@ -27,6 +27,8 @@ class CustomDashboardResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBarSquare;
 
     public static function getNavigationGroup(): string|UnitEnum|null
@@ -41,7 +43,7 @@ class CustomDashboardResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return (string) config('visual-dashboards.navigation.label', 'Visual Dashboards');
+        return (string) config('visual-dashboards.navigation.label', 'Dashboards');
     }
 
     public static function getModelLabel(): string

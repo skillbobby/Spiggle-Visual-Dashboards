@@ -5,6 +5,7 @@ namespace Spiggle\VisualDashboards\Services;
 use Illuminate\Support\Collection;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
 use Spiggle\VisualDashboards\Models\Dashlet;
+use Spiggle\VisualDashboards\Support\DashboardFilters;
 use Spiggle\VisualDashboards\Support\DashletAccess;
 
 class LayoutManager
@@ -31,6 +32,7 @@ class LayoutManager
                 'grid_y' => (int) ($item['y'] ?? $dashlet->grid_y),
                 'grid_w' => (int) ($item['w'] ?? $dashlet->grid_w),
                 'grid_h' => (int) ($item['h'] ?? $dashlet->grid_h),
+                'grid_z' => (int) ($item['z'] ?? $dashlet->grid_z),
             ];
 
             if (
@@ -38,6 +40,7 @@ class LayoutManager
                 && $dashlet->grid_y === $next['grid_y']
                 && $dashlet->grid_w === $next['grid_w']
                 && $dashlet->grid_h === $next['grid_h']
+                && (int) $dashlet->grid_z === $next['grid_z']
             ) {
                 continue;
             }
@@ -70,32 +73,62 @@ class LayoutManager
     }
 
     /**
+     * Pull cards up into empty rows. Cards that sit in front of or behind another keep that overlap.
+     *
      * @param  array<int, array<string, int|string>>  $items
-     * @return array<int, array{id: int, x: int, y: int, w: int, h: int}>
+     * @return array<int, array{id: int, x: int, y: int, w: int, h: int, z: int}>
      */
     public function resolve(array $items): array
     {
         $columns = $this->columns();
-        $placed = [];
+        $normalized = [];
 
         foreach ($items as $item) {
             $width = max(2, min($columns, (int) ($item['w'] ?? 2)));
             $height = max(2, (int) ($item['h'] ?? 2));
-            $candidate = [
+            $x = max(0, (int) ($item['x'] ?? 0));
+
+            if ($x + $width > $columns) {
+                $x = max(0, $columns - $width);
+            }
+
+            $normalized[] = [
                 'id' => (int) ($item['id'] ?? 0),
-                'x' => max(0, (int) ($item['x'] ?? 0)),
+                'x' => $x,
                 'y' => max(0, (int) ($item['y'] ?? 0)),
                 'w' => $width,
                 'h' => $height,
+                'z' => (int) ($item['z'] ?? 0),
             ];
+        }
 
-            if ($candidate['x'] + $width > $columns || $this->overlapsAny($candidate, $placed)) {
-                $slot = $this->firstFreeSlot($placed, $width, $height, $columns);
-                $candidate['x'] = $slot['x'];
-                $candidate['y'] = $slot['y'];
+        usort($normalized, function (array $left, array $right): int {
+            return [$left['y'], $left['x'], $left['z'], $left['id']] <=> [$right['y'], $right['x'], $right['z'], $right['id']];
+        });
+
+        $placed = [];
+
+        foreach ($normalized as $item) {
+            if ($this->isPinned($item, $normalized)) {
+                $placed[] = $item;
+
+                continue;
             }
 
-            $placed[] = $candidate;
+            $y = 0;
+
+            while ($y < 250 && $this->overlapsAny([
+                'id' => $item['id'],
+                'x' => $item['x'],
+                'y' => $y,
+                'w' => $item['w'],
+                'h' => $item['h'],
+            ], $placed)) {
+                $y++;
+            }
+
+            $item['y'] = $y;
+            $placed[] = $item;
         }
 
         return $placed;
@@ -139,23 +172,41 @@ class LayoutManager
 
     /**
      * @param  array<int|string, string>  $grains
+     * @param  array<string, mixed>  $activeFilters
      * @return Collection<int, array<string, mixed>>
      */
-    public function gridItems(CustomDashboard $dashboard, array $grains = [], bool $enforceDashletAccess = true): Collection
+    public function gridItems(CustomDashboard $dashboard, array $grains = [], bool $enforceDashletAccess = true, array $activeFilters = []): Collection
     {
         $registry = app(DashletRegistry::class);
         $user = auth()->user();
+        $definitions = DashboardFilters::definitions($dashboard);
 
         return $dashboard->dashlets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
             ->get()
-            ->filter(fn (Dashlet $dashlet): bool => ! $enforceDashletAccess || DashletAccess::allows($user, $dashlet->normalizedConfig(), $dashboard))
             ->values()
-            ->map(function (Dashlet $dashlet) use ($registry, $grains): array {
-                $config = $dashlet->normalizedConfig();
+            ->map(function (Dashlet $dashlet) use ($registry, $grains, $definitions, $activeFilters, $enforceDashletAccess, $user, $dashboard): array {
+                if ($enforceDashletAccess && ! DashletAccess::allows($user, $dashlet->normalizedConfig(), $dashboard)) {
+                    return [
+                        'id' => $dashlet->id,
+                        'x' => $dashlet->grid_x,
+                        'y' => $dashlet->grid_y,
+                        'w' => $dashlet->grid_w,
+                        'h' => $dashlet->grid_h,
+                        'z' => (int) $dashlet->grid_z,
+                        'payload' => DashletAccess::restrictedPayload($dashlet),
+                    ];
+                }
+
+                $config = DashboardFilters::apply($dashlet->normalizedConfig(), $definitions, $activeFilters);
                 $visual = is_array($config['visual'] ?? null) ? $config['visual'] : [];
                 $grain = $grains[$dashlet->id] ?? $grains[(string) $dashlet->id] ?? null;
+                $rendering = $dashlet->replicate();
+                $rendering->id = $dashlet->id;
+                $rendering->exists = true;
+                $rendering->config = $config;
+                $rendering->updated_at = $dashlet->updated_at;
                 $overrides = [];
 
                 if (filled($grain) && $this->periodFilterEnabled($visual)) {
@@ -168,7 +219,8 @@ class LayoutManager
                     'y' => $dashlet->grid_y,
                     'w' => $dashlet->grid_w,
                     'h' => $dashlet->grid_h,
-                    'payload' => $registry->renderPayload($dashlet, $overrides),
+                    'z' => (int) $dashlet->grid_z,
+                    'payload' => $registry->renderPayload($rendering, $overrides),
                 ];
             });
     }
@@ -212,6 +264,31 @@ class LayoutManager
             if ($this->collides($candidate, $item)) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, int>  $item
+     * @param  array<int, array<string, int>>  $items
+     */
+    protected function isPinned(array $item, array $items): bool
+    {
+        if ((int) ($item['z'] ?? 0) !== 0) {
+            return true;
+        }
+
+        foreach ($items as $other) {
+            if ((int) ($other['id'] ?? 0) === (int) ($item['id'] ?? 0)) {
+                continue;
+            }
+
+            if ((int) ($other['z'] ?? 0) === 0 || ! $this->collides($item, $other)) {
+                continue;
+            }
+
+            return true;
         }
 
         return false;

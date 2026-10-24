@@ -2,8 +2,10 @@
 
 namespace Spiggle\VisualDashboards\DataSources;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spiggle\FormBuilder\Models\FormAuditLog;
 use Spiggle\VisualDashboards\Support\PeriodRangeFilter;
 use Spiggle\VisualDashboards\Support\QueryConfig;
 use Spiggle\VisualDashboards\Support\QueryFilterApplier;
@@ -119,7 +121,7 @@ class FormAuditLogDataSource extends BaseDataSource
 
     public function available(): bool
     {
-        return class_exists(\Spiggle\FormBuilder\Models\FormAuditLog::class)
+        return class_exists(FormAuditLog::class)
             && Schema::hasTable($this->auditTable());
     }
 
@@ -147,7 +149,7 @@ class FormAuditLogDataSource extends BaseDataSource
     /**
      * @param  array<string, mixed>  $normalized
      */
-    protected function baseQuery(array $normalized): \Illuminate\Database\Query\Builder
+    protected function baseQuery(array $normalized): Builder
     {
         $filters = $normalized['filters'];
         $query = DB::table($this->auditTable());

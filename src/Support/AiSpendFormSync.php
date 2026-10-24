@@ -5,14 +5,14 @@ namespace Spiggle\VisualDashboards\Support;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Spiggle\VisualDashboards\Models\AiAnomaly;
-use Spiggle\VisualDashboards\Models\AiInsight;
-use Spiggle\VisualDashboards\Models\AiService;
-use Spiggle\VisualDashboards\Models\AiUsageReport;
 use Spiggle\FormBuilder\Events\FormSubmitted;
 use Spiggle\FormBuilder\Models\Form;
 use Spiggle\FormBuilder\Models\FormSubmission;
 use Spiggle\FormBuilder\Support\SchemaNormalizer;
+use Spiggle\VisualDashboards\Models\AiAnomaly;
+use Spiggle\VisualDashboards\Models\AiInsight;
+use Spiggle\VisualDashboards\Models\AiService;
+use Spiggle\VisualDashboards\Models\AiUsageReport;
 
 class AiSpendFormSync
 {

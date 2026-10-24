@@ -1,5 +1,10 @@
 <?php
 
+use Spiggle\VisualDashboards\DataSources\AiSpendDataSource;
+use Spiggle\VisualDashboards\DataSources\LoginActivityDataSource;
+use Spiggle\VisualDashboards\DataSources\SampleMetricsDataSource;
+use Spiggle\VisualDashboards\DataSources\UserMetricsDataSource;
+
 return [
     'tables' => [
         'dashboards' => 'custom_dashboards',
@@ -14,7 +19,7 @@ return [
 
     'navigation' => [
         'group' => null,
-        'label' => 'Visual Dashboards',
+        'label' => 'Dashboards',
         'icon' => 'heroicon-o-chart-bar-square',
         'sort' => 35,
     ],
@@ -71,10 +76,10 @@ return [
     ],
 
     'data_sources' => [
-        'users' => Spiggle\VisualDashboards\DataSources\UserMetricsDataSource::class,
-        'sample_metrics' => Spiggle\VisualDashboards\DataSources\SampleMetricsDataSource::class,
-        'login_activity' => Spiggle\VisualDashboards\DataSources\LoginActivityDataSource::class,
-        'ai_spend' => Spiggle\VisualDashboards\DataSources\AiSpendDataSource::class,
+        'users' => UserMetricsDataSource::class,
+        'sample_metrics' => SampleMetricsDataSource::class,
+        'login_activity' => LoginActivityDataSource::class,
+        'ai_spend' => AiSpendDataSource::class,
     ],
 
     'user_model' => env('VISUAL_DASHBOARDS_USER_MODEL', env('DASHLET_USER_MODEL', 'App\\Models\\User')),

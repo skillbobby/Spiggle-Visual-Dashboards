@@ -28,6 +28,70 @@
     max-width: 42rem;
 }
 
+.vd-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: flex-end;
+    padding: 0.75rem;
+    border: 1px solid rgb(229 231 235);
+    border-radius: 0.75rem;
+    background: rgb(249 250 251);
+}
+
+.vd-filter-control,
+.vd-filter-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 10rem;
+}
+
+.vd-filter-control span,
+.vd-filter-editor span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgb(75 85 99);
+}
+
+.vd-filter-remove {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: rgb(107 114 128);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.dashlet-kpi-value-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.dashlet-kpi-suffix {
+    font-size: 0.95rem;
+    color: rgb(75 85 99);
+    padding-bottom: 0.2rem;
+}
+
+.dashlet-kpi-sparkline {
+    width: 5.5rem;
+    height: 2rem;
+    color: rgb(59 130 246);
+    margin-left: auto;
+}
+
+.dashlet-kpi-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0.35rem 0 0;
+    color: rgb(75 85 99);
+    font-size: 0.8rem;
+}
+
 .dark .vd-canvas-description {
     color: rgb(161 161 170);
 }
@@ -544,6 +608,12 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+}
+
+.vd-access-roles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .vd-input {

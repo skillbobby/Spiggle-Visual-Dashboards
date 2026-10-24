@@ -7,10 +7,12 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Spiggle\VisualDashboards\Livewire\Concerns\InteractsWithDashboardFilters;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
 use Spiggle\VisualDashboards\Models\Dashlet;
 use Spiggle\VisualDashboards\Services\DataEngine;
@@ -19,20 +21,22 @@ use Spiggle\VisualDashboards\Services\RelatedSourceDiscoverer;
 use Spiggle\VisualDashboards\Services\VisualDashboardDataSourceRegistry;
 use Spiggle\VisualDashboards\Support\ChartVariantCatalog;
 use Spiggle\VisualDashboards\Support\DashboardAccess;
+use Spiggle\VisualDashboards\Support\DashletAccess;
 use Spiggle\VisualDashboards\Support\DataSourceDescriptor;
 use Spiggle\VisualDashboards\Support\FieldValueFormatter;
 use Spiggle\VisualDashboards\Support\GroupByDimension;
 use Spiggle\VisualDashboards\Support\KpiCardCatalog;
 use Spiggle\VisualDashboards\Support\KpiPeriod;
 use Spiggle\VisualDashboards\Support\ValueFormatter;
-use Spiggle\VisualDashboards\Support\VisualQueryBuilder;
 use Spiggle\VisualDashboards\Support\VirtualMeasures;
+use Spiggle\VisualDashboards\Support\VisualQueryBuilder;
 use Spiggle\VisualDashboards\Support\VisualTypes;
 use Throwable;
 
 class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions;
+    use InteractsWithDashboardFilters;
     use InteractsWithSchemas;
 
     public int $dashboardId;
@@ -46,6 +50,11 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     public ?int $selectedVisualId = null;
 
     public string $editHeading = '';
+
+    /**
+     * @var list<string>
+     */
+    public array $editAccessRoles = [];
 
     public string $editSubheading = '';
 
@@ -100,6 +109,21 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     public bool $editKpiHigherIsBetter = true;
 
     public string $editKpiComparisonLabel = 'than last period';
+
+    public string $editKpiValueSuffix = '';
+
+    public string $editKpiSparklineField = '';
+
+    public string $editKpiSparklineGrain = 'week';
+
+    /**
+     * @var list<array{label: string, fn: string, field: string, format: string}>
+     */
+    public array $editKpiSupporting = [];
+
+    public string $editGaugeMin = '';
+
+    public string $editGaugeMax = '';
 
     public string $editSourceGroup = '';
 
@@ -194,6 +218,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         );
 
         $this->dashboardId = $dashboardId;
+        $this->initializeDashboardFilters();
         $this->refreshLayout();
     }
 
@@ -261,6 +286,10 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $this->panelOpen = true;
         $this->panelTab = in_array($tab, ['properties', 'datasource'], true) ? $tab : 'datasource';
         $this->editHeading = (string) ($config['heading'] ?? '');
+        $this->editAccessRoles = array_values(array_filter(array_map(
+            static fn (mixed $role): string => trim((string) $role),
+            is_array($config['access_roles'] ?? null) ? $config['access_roles'] : []
+        )));
         $this->editSubheading = (string) ($config['subheading'] ?? '');
         $this->editColorScheme = (string) data_get($config, 'visual.color_scheme', 'amber');
         $this->editBorder = (bool) data_get($config, 'visual.border', true);
@@ -270,6 +299,8 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
             $visual->type,
             data_get($config, 'visual.chart_variant')
         );
+        $this->editGaugeMin = (string) data_get($config, 'visual.gauge_min', '');
+        $this->editGaugeMax = (string) data_get($config, 'visual.gauge_max', '');
         $this->loadFormatSettingsFromConfig($config);
         $this->loadKpiSettingsFromConfig($config);
         $this->formatTab = $this->defaultFormatTabForType($visual->type);
@@ -818,6 +849,14 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $config['visual']['kpi'] = $this->buildKpiVisualConfig();
         $config['visual'] = array_replace($config['visual'], $this->formatVisualConfig());
 
+        if ($visual->type === 'radialbar') {
+            $config['visual']['gauge_min'] = $this->editGaugeMin === '' ? 0 : (float) $this->editGaugeMin;
+            $config['visual']['gauge_max'] = $this->editGaugeMax === '' ? 0 : (float) $this->editGaugeMax;
+        }
+
+        $allowedRoles = array_keys($this->accessRoleOptions());
+        $config['access_roles'] = array_values(array_intersect($this->editAccessRoles, $allowedRoles));
+
         $visual->update(['config' => $config]);
         $this->panelNotice = '';
         $this->refreshLayout();
@@ -862,11 +901,23 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
 
         $tabs['area'] = 'Chart area';
 
+        if ($this->accessRoleOptions() !== []) {
+            $tabs['access'] = 'Access';
+        }
+
         if ($type === 'stat_card') {
             $tabs['kpi'] = 'KPI';
         }
 
         return $tabs;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function accessRoleOptions(): array
+    {
+        return DashletAccess::roleOptions();
     }
 
     protected function defaultFormatTabForType(string $type): string
@@ -1076,6 +1127,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
                 'y' => (int) $item['y'],
                 'w' => (int) $item['w'],
                 'h' => (int) $item['h'],
+                'z' => (int) ($item['z'] ?? 0),
             ])
             ->values()
             ->all();
@@ -1491,6 +1543,14 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $this->editKpiComparisonUp = (bool) ($comparison['up'] ?? true);
         $this->editKpiHigherIsBetter = (bool) ($comparison['higher_is_better'] ?? true);
         $this->editKpiComparisonLabel = (string) ($comparison['label'] ?? 'than last period');
+        $kpi = is_array(data_get($config, 'visual.kpi')) ? data_get($config, 'visual.kpi') : [];
+        $this->editKpiValueSuffix = (string) ($kpi['value_suffix'] ?? '');
+        $this->editKpiSparklineField = (string) ($kpi['sparkline_field'] ?? '');
+        $this->editKpiSparklineGrain = (string) ($kpi['sparkline_grain'] ?? 'week');
+        $this->editKpiSupporting = array_values(array_filter(
+            is_array($kpi['supporting'] ?? null) ? $kpi['supporting'] : [],
+            static fn (mixed $row): bool => is_array($row)
+        ));
     }
 
     /**
@@ -1517,7 +1577,36 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
                 'higher_is_better' => $this->editKpiHigherIsBetter,
                 'label' => $this->editKpiComparisonLabel,
             ],
+            'value_suffix' => $this->editKpiValueSuffix,
+            'sparkline_field' => $this->editKpiSparklineField,
+            'sparkline_grain' => in_array($this->editKpiSparklineGrain, ['day', 'week', 'month', 'year'], true)
+                ? $this->editKpiSparklineGrain
+                : 'week',
+            'supporting' => array_values(array_map(static function (array $row): array {
+                return [
+                    'label' => (string) ($row['label'] ?? ''),
+                    'fn' => (string) ($row['fn'] ?? 'COUNT'),
+                    'field' => (string) ($row['field'] ?? '*'),
+                    'format' => (string) ($row['format'] ?? 'number'),
+                ];
+            }, $this->editKpiSupporting)),
         ];
+    }
+
+    public function addKpiSupporting(): void
+    {
+        $this->editKpiSupporting[] = [
+            'label' => '',
+            'fn' => 'COUNT',
+            'field' => '*',
+            'format' => 'number',
+        ];
+    }
+
+    public function removeKpiSupporting(int $index): void
+    {
+        unset($this->editKpiSupporting[$index]);
+        $this->editKpiSupporting = array_values($this->editKpiSupporting);
     }
 
     public function updatedEditFieldFormats(): void
@@ -1939,7 +2028,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
 
     public function render()
     {
-        return view('visual-dashboards::livewire.visual-dashboard-canvas', [
+        return view('visual-dashboards::livewire.visual-dashboard-canvas', array_merge([
             'dashboard' => $this->dashboard(),
             'items' => $this->gridItems(),
             'columns' => (int) config('visual-dashboards.grid.columns', 12),
@@ -1949,7 +2038,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
             'selectedVisual' => $this->selectedVisual(),
             'previewPayload' => $this->livePreviewPayload(),
             'cachedTransformPreviewRowCount' => $this->cachedTransformPreviewRowCount,
-        ]);
+        ], $this->dashboardFilterViewData(canEditFilters: true)));
     }
 
     /**
@@ -1958,7 +2047,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     protected function gridItems(): array
     {
         return app(LayoutManager::class)
-            ->gridItems($this->dashboard(), $this->grains)
+            ->gridItems($this->dashboard(), $this->grains, activeFilters: $this->filterValues)
             ->values()
             ->all();
     }
@@ -2515,7 +2604,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * @param  (callable(\Illuminate\Database\Query\Builder): void)|null  $scope
+     * @param  (callable(Builder): void)|null  $scope
      * @return array<string, string>
      */
     protected function distinctColumnValues(
@@ -2542,7 +2631,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * @param  (callable(\Illuminate\Database\Query\Builder): void)|null  $scope
+     * @param  (callable(Builder): void)|null  $scope
      * @return array<string, string>
      */
     protected function distinctJsonPayloadValues(string $table, string $field, ?callable $scope = null, int $limit = 50): array
@@ -2576,7 +2665,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     /**
      * @return array<string, string>
      */
-    protected function distinctColumnValuesFromQuery(\Illuminate\Database\Query\Builder $query, string $column, int $limit = 50): array
+    protected function distinctColumnValuesFromQuery(Builder $query, string $column, int $limit = 50): array
     {
         return $query
             ->select($column)

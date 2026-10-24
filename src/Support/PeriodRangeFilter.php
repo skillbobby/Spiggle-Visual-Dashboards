@@ -8,7 +8,6 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 class PeriodRangeFilter
 {
     /**
-     * @param  EloquentBuilder|QueryBuilder  $query
      * @param  array<string, mixed>  $normalized
      */
     public static function applyCreatedAtWindow(EloquentBuilder|QueryBuilder $query, array $normalized, string $column = 'created_at'): void
@@ -40,7 +39,6 @@ class PeriodRangeFilter
     }
 
     /**
-     * @param  EloquentBuilder|QueryBuilder  $query
      * @param  array<string, mixed>  $filters
      */
     protected static function applyKpiPeriod(EloquentBuilder|QueryBuilder $query, array $filters, string $column): void

@@ -21,6 +21,7 @@ class FeatureCatalog
         'donut',
         'funnel',
         'radialbar',
+        'treemap',
         'radar',
         'container',
     ];

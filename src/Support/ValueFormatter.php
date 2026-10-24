@@ -11,6 +11,7 @@ class ValueFormatter
     {
         return [
             'number' => 'Number',
+            'decimal' => 'Decimal',
             'percent' => 'Percent',
             'currency' => 'Currency',
         ];
@@ -76,6 +77,7 @@ class ValueFormatter
 
         return match (self::formatKey($format)) {
             'percent' => number_format($number, 1).'%',
+            'decimal' => number_format($number, 1),
             'currency' => self::currencySymbol(self::normalizeCurrency($currency)).number_format($number, 2),
             default => number_format($number),
         };

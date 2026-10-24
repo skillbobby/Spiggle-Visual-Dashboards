@@ -13,11 +13,23 @@
         ></span>
     </div>
 
-    <div
-        class="dashlet-kpi-value"
-        :style="'--kpi-value-size: ' + (item.payload?.kpi?.value_style?.font_size || '1.875rem') + '; --kpi-value-weight: ' + (item.payload?.kpi?.value_style?.font_weight || '700') + ';'"
-        x-text="item.payload?.formatted ?? (item.payload?.value != null ? item.payload.value : '0')"
-    ></div>
+    <div class="dashlet-kpi-value-row">
+        <div
+            class="dashlet-kpi-value"
+            :style="'--kpi-value-size: ' + (item.payload?.kpi?.value_style?.font_size || '1.875rem') + '; --kpi-value-weight: ' + (item.payload?.kpi?.value_style?.font_weight || '700') + ';'"
+            x-text="item.payload?.formatted ?? (item.payload?.value != null ? item.payload.value : '0')"
+        ></div>
+        <span class="dashlet-kpi-suffix" x-show="item.payload?.kpi?.value_suffix" x-text="item.payload?.kpi?.value_suffix"></span>
+        <svg class="dashlet-kpi-sparkline" viewBox="0 0 120 36" x-show="(item.payload?.sparkline || []).length > 1" aria-hidden="true">
+            <polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :points="window.spiggleSparklinePoints(item.payload?.sparkline || [])"></polyline>
+        </svg>
+    </div>
+
+    <p class="dashlet-kpi-details" x-show="(item.payload?.details || []).length">
+        <template x-for="detail in item.payload?.details || []" :key="detail.label">
+            <span><strong x-text="detail.formatted"></strong> <span x-text="detail.label"></span></span>
+        </template>
+    </p>
 
     <p class="dashlet-kpi-comparison" x-show="item.payload?.kpi?.comparison">
         <span

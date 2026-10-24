@@ -112,6 +112,16 @@ class VisualTypes
                 'default_w' => 4,
                 'default_h' => 4,
             ],
+            'treemap' => [
+                'type' => 'treemap',
+                'label' => 'Treemap',
+                'description' => 'Area tiles sized by a measure and labeled by a category.',
+                'ideal_usage' => 'Part-to-whole comparisons with many categories',
+                'icon' => 'treemap',
+                'enabled' => true,
+                'default_w' => 4,
+                'default_h' => 5,
+            ],
         ];
     }
 
@@ -241,6 +251,19 @@ class VisualTypes
                     $breakdown('Split bars by', 'Optional. Color-groups bars (for example by action type).'),
                 ],
                 'aggregation' => $aggregation('How to summarize', 'How values are combined for each bar.'),
+                'gauge_thresholds' => false,
+            ],
+            'treemap' => [
+                'type' => $type,
+                'label' => $label,
+                'icon' => $icon,
+                'intro' => 'Each tile is a category. Tile area is the aggregated value.',
+                'slots' => [
+                    $dimension('Tile label', 'What each tile represents.', required: true),
+                    $measure('Tile size', 'Numeric field, or Row count to size each tile.'),
+                    $breakdown('Split tiles by', 'Optional. Draw a separate group for each value.'),
+                ],
+                'aggregation' => $aggregation('How to summarize', 'How values are combined for each tile.'),
                 'gauge_thresholds' => false,
             ],
             'column' => [
@@ -433,7 +456,7 @@ class VisualTypes
         }
 
         if (
-            in_array($type, ['bar', 'column', 'pie', 'donut', 'funnel'], true)
+            in_array($type, ['bar', 'column', 'pie', 'donut', 'funnel', 'treemap'], true)
             && blank($values['editGroupBy'] ?? '')
         ) {
             return false;
@@ -512,6 +535,7 @@ class VisualTypes
             'stacked' => '<svg viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M8 28h32" stroke="currentColor" stroke-width="1.25" opacity=".35"/><rect x="12" y="18" width="7" height="10" rx="1" fill="currentColor" opacity=".35"/><rect x="12" y="11" width="7" height="7" rx="1" fill="currentColor"/><rect x="22" y="16" width="7" height="12" rx="1" fill="currentColor" opacity=".35"/><rect x="22" y="9" width="7" height="7" rx="1" fill="currentColor"/><rect x="32" y="20" width="7" height="8" rx="1" fill="currentColor" opacity=".35"/><rect x="32" y="13" width="7" height="7" rx="1" fill="currentColor"/></svg>',
             'funnel' => '<svg viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 9h28l-8 9v9H18v-9L10 9z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" fill="none"/></svg>',
             'radialbar' => '<svg viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11 27a13 13 0 0 1 26 0" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" opacity=".25"/><path d="M11 27a13 13 0 0 1 18-11.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>',
+            'treemap' => '<svg viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="6" y="7" width="22" height="22" rx="1.5" fill="currentColor" opacity=".85"/><rect x="30" y="7" width="12" height="13" rx="1.5" fill="currentColor" opacity=".55"/><rect x="30" y="22" width="12" height="7" rx="1.5" fill="currentColor" opacity=".35"/></svg>',
             default => '<svg viewBox="0 0 48 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="7" y="9" width="34" height="18" rx="3" stroke="currentColor" stroke-width="1.75"/><circle cx="24" cy="18" r="3.5" fill="currentColor"/></svg>',
         };
     }
