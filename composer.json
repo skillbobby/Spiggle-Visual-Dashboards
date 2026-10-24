@@ -1,12 +1,14 @@
 {
     "name": "spiggle/visual-dashboards",
-    "description": "Spiggle Visual Dashboards — private Power BI-style dashboard canvas for Laravel Filament.",
+    "description": "Turn the records already in your app into a live Filament dashboard, then publish a page people want to open.",
     "type": "library",
     "version": "1.1.0",
     "license": "proprietary",
     "keywords": [
         "laravel",
         "filament",
+        "filament-plugin",
+        "filamentphp",
         "dashboard",
         "visual-dashboards",
         "charts",

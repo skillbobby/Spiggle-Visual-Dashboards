@@ -6,7 +6,7 @@
 |---|---|
 | **Package** | `spiggle/visual-dashboards` v1.1.0 |
 
-Filament plugin for building a live dashboard on a canvas and publishing it as a page.
+Turn the records already in your app into a dashboard people actually want to open. Pick a model, drop a chart on the canvas, and publish a live page in a few minutes.
 
 ## Install
 
@@ -55,6 +55,23 @@ php artisan visual-dashboards:verify
 
 See [docs/VISUAL_DASHBOARDS.md](docs/VISUAL_DASHBOARDS.md).
 
+## Spiggle plugins
+
+- **[FilaWarden Core](https://github.com/skillbobby/Spiggle-FilaWarden-Core)** — deployment checks, queue and cron health, and production diagnostics inside Filament.
+- **[Form Builder Core](https://github.com/skillbobby/Spiggle-Form-Builder-Core)** — public forms, submissions, and CSV export.
+- **[Dynamic Fields Core](https://github.com/skillbobby/Spiggle-Dynamic-Fields-Core)** — custom fields on any Eloquent model.
+- **[Rules Engine](https://github.com/skillbobby/Spiggle-Rules-Engine)** — event triggers you design in the panel.
+- **[List View](https://github.com/skillbobby/Spiggle-List-View)** — switch a Filament table to an alphabetical list.
+- **[Portal Snapshot](https://github.com/skillbobby/Spiggle-Filament-Portal-Snapshot)** — schedule, restore, and export database snapshots, including demo resets.
+
+## Sponsors
+
+Support the plugins at [github.com/sponsors/skillbobby](https://github.com/sponsors/skillbobby).
+
+## Contact
+
+[Spiggle on X](https://x.com/iamspiggle)
+
 ## License
 
-Proprietary. All rights reserved. Not for public distribution.
+All rights reserved. You can review this repository and install the package in your own Laravel application. See [LICENSE](LICENSE).

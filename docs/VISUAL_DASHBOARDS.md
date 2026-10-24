@@ -1,6 +1,6 @@
 # Visual Dashboards Architecture
 
-Visual Dashboards is a single private package (`spiggle/visual-dashboards`). There is no core/pro split and no licensing layer.
+Visual Dashboards is a single package (`spiggle/visual-dashboards`). There is no core/pro split and no licensing layer.
 
 ## Flow
 
@@ -80,7 +80,7 @@ Joined fields appear in the UI as `Customer → Name` and are stored as `custome
 
 ### Working now
 
-- Unified private package (no Pro/licensing)
+- Unified package (no Pro/licensing)
 - Canvas with drag/resize/save
 - Chart gallery + KPI card
 - Properties + Data source slide-over tabs
