@@ -1,5 +1,3 @@
-![Visual Dashboards](art/banner.jpg)
-
 # Spiggle Visual Dashboards
 
 | | |
