@@ -3,33 +3,172 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spiggle Dashlet Core — Runtime dashboards for Laravel & Filament</title>
-  <meta name="description" content="Free Core package for runtime Filament dashboards with data sources, filters, and chart dashlets.">
+  <title>Spiggle Visual Dashboards — Live dashboards for Laravel & Filament</title>
+  <meta name="description" content="Turn the records already in your Laravel app into a dashboard people actually want to open. Drag-and-drop canvas, live model charts, KPI cards, and public links.">
+  <link rel="canonical" href="https://skillbobby.github.io/Spiggle-Visual-Dashboards/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="logo" href="#">Spiggle Dashlet <span>Core</span></a>
+      <a class="logo" href="#">Spiggle Visual Dashboards</a>
       <nav class="nav">
-        <a href="guide/index.html">Guide</a>
-        <a href="https://github.com/skillbobby/spiggle-visual-dashboards">GitHub</a>
+        <a class="hide-mobile" href="#features">Features</a>
+        <a class="hide-mobile" href="#demo">Demo</a>
+        <a class="hide-mobile" href="#install">Install</a>
+        <a class="hide-mobile" href="https://github.com/skillbobby/Spiggle-Visual-Dashboards/issues">Issues</a>
+        <a class="hide-mobile" href="https://github.com/sponsors/skillbobby" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;color:#f43f5e;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>Sponsor</a>
+        <a class="btn btn-outline" href="https://github.com/skillbobby/Spiggle-Visual-Dashboards">GitHub</a>
       </nav>
     </div>
   </header>
+
   <main>
     <section class="hero">
       <div class="container">
-        <h1>Runtime dashboards without hardcoded widgets</h1>
-        <p class="hero-lead">Pick data sources, preview datasets, choose chart dashlets, and arrange them on a live grid — all from Filament.</p>
-        <a class="btn btn-primary" href="https://github.com/skillbobby/spiggle-visual-dashboards">Get Community Edition</a>
+        <div class="hero-kicker">Laravel · Filament 5 · MIT</div>
+        <h1>Dashboards people actually want to open</h1>
+        <p class="hero-lead">Pick a model, drop a chart on the canvas, and publish a live page in a few minutes. No hardcoded widgets. Data comes from the records already in your app.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/skillbobby/Spiggle-Visual-Dashboards">Get the package</a>
+          <a class="btn btn-outline" href="#demo">Watch the demo</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="demo-section">
+      <div class="container">
+        <div class="section-label">Demo</div>
+        <h2 class="section-title">Build a live dashboard in under 2 minutes</h2>
+        <p class="section-desc">Create a board, bind a bar chart to a real model, add a KPI card, and publish the page.</p>
+        <div class="video-wrap" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;max-width:900px;margin:2rem auto;border-radius:12px;box-shadow:0 20px 40px -20px rgba(0,0,0,.25);">
+          <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" src="https://www.youtube.com/embed/OAcjx3Kpk4E" title="Build a live Filament dashboard in under 2 minutes" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything you need to ship a dashboard</h2>
+        <div class="features-grid">
+          <article class="feature-card">
+            <h3>Visual canvas</h3>
+            <p>Drag, resize, snap into gaps, and stack cards in front or behind. Layouts feel intentional without pixel-pushing.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Chart gallery</h3>
+            <p>KPI card, table, line, bar, column, pie, donut, stacked, funnel, and radial gauge. Pick the visual that matches the question.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Live models</h3>
+            <p>Chart fields come from Eloquent models that already have records, including related names. No separate data warehouse required.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Public link</h3>
+            <p>Optional anonymous access at <code>/visual-dashboards/{id}/{slug}</code>. Signed-in viewers with the right role can always open it.</p>
+          </article>
+          <article class="feature-card">
+            <h3>Viewer roles</h3>
+            <p>Optional Spatie or Shield allowlist for signed-in viewing, including per dashlet. Works without Shield installed.</p>
+          </article>
+          <article class="feature-card">
+            <h3>One sidebar item</h3>
+            <p>Visual Dashboards opens the dashboard list. No extra clutter in the panel navigation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="install-section">
+      <div class="container">
+        <div class="section-label">Install</div>
+        <h2 class="section-title">Up and running in minutes</h2>
+        <pre><code>composer require spiggle/visual-dashboards
+php artisan migrate</code></pre>
+        <p>Register the plugin on your Filament panel:</p>
+        <pre><code>use Spiggle\VisualDashboards\Filament\VisualDashboardsPlugin;
+
+$panel->plugin(VisualDashboardsPlugin::make());</code></pre>
+        <p>Verify the install:</p>
+        <pre><code>php artisan visual-dashboards:verify</code></pre>
+      </div>
+    </section>
+
+    <section class="how-it-works">
+      <div class="container">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Build a dashboard</h2>
+        <ol class="steps">
+          <li>Open <strong>Visual Dashboards</strong> and create a new dashboard. Name it, then open the canvas.</li>
+          <li>Choose <strong>Insert visual</strong> and pick a chart. Bars work well when you want to compare categories.</li>
+          <li>Set the source category to <strong>Models</strong> and choose the model that holds the records. For the bars, pick the category field. For the length, pick <strong>Row count</strong>, or another measure. Save the chart.</li>
+          <li>Insert a <strong>KPI card</strong> the same way when the page needs a headline number.</li>
+          <li>Drag a card by its header. It snaps into the nearest gap. Drop it on another card to place it in front or behind.</li>
+          <li>Open <strong>Dashboard settings</strong>, turn on <strong>Public link</strong>, and save.</li>
+          <li>Open the share URL. Signed-in allowed viewers can always use it. With the public link on, anyone with the URL can view the page.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="plugins-section">
+      <div class="container">
+        <h2 class="section-title">More Spiggle plugins</h2>
+        <div class="plugins">
+          <article class="plugin-card">
+            <h3>Dynamic Fields Core</h3>
+            <p>Custom fields on any Eloquent model — no migrations per field.</p>
+            <a class="btn btn-outline" href="https://skillbobby.github.io/Spiggle-Dynamic-Fields-Core/">View →</a>
+          </article>
+          <article class="plugin-card">
+            <h3>Form Builder Core</h3>
+            <p>Public forms, submissions, and CSV export.</p>
+            <a class="btn btn-outline" href="https://skillbobby.github.io/Spiggle-Form-Builder-Core/">View →</a>
+          </article>
+          <article class="plugin-card">
+            <h3>Rules Engine</h3>
+            <p>Event triggers you design in the panel.</p>
+            <a class="btn btn-outline" href="https://skillbobby.github.io/Spiggle-Rules-Engine/">View →</a>
+          </article>
+          <article class="plugin-card">
+            <h3>FilaWarden Core</h3>
+            <p>Deployment checks, queue and cron health, and production diagnostics.</p>
+            <a class="btn btn-outline" href="https://github.com/skillbobby/Spiggle-FilaWarden-Core">View →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="custom" class="custom-cta-wrap">
+      <div class="container">
+        <div class="custom-cta">
+          <div class="custom-cta-copy">
+            <h2>Need something custom?</h2>
+            <p>Spiggle specializes in developing custom Filament panels and bespoke plugins. Whether you require a modified version of an existing package or a completely new solution built from the ground up, contact us to discuss your project requirements.</p>
+          </div>
+          <a class="btn btn-accent custom-cta-btn" href="https://x.com/iamspiggle">Get in touch →</a>
+        </div>
       </div>
     </section>
   </main>
+
   <footer class="site-footer">
-    <div class="container">
-<small class="footer-update">v1.1.7</small>
-</div>
+    <div class="container footer-inner">
+      <div>© <span id="y"></span> Spiggle · Visual Dashboards <small class="footer-update">v1.1.7</small></div>
+      <nav class="footer-links">
+        <a href="https://github.com/sponsors/skillbobby" target="_blank" rel="noopener" style="color:#f43f5e;font-weight:600;">♥ Sponsor</a>
+        <a href="https://github.com/skillbobby/Spiggle-Visual-Dashboards">GitHub</a>
+        <a href="https://github.com/skillbobby/Spiggle-Visual-Dashboards/issues">Issues</a>
+        <a href="guide/">Docs</a>
+      </nav>
+    </div>
   </footer>
+
+  <script>
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
