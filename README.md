@@ -62,10 +62,6 @@ See [docs/VISUAL_DASHBOARDS.md](docs/VISUAL_DASHBOARDS.md).
 - **[List View](https://github.com/skillbobby/Spiggle-List-View)** — switch a Filament table to an alphabetical list.
 - **[Portal Snapshot](https://github.com/skillbobby/Spiggle-Filament-Portal-Snapshot)** — schedule, restore, and export database snapshots, including demo resets.
 
-## Sponsors
-
-Support the plugins at [github.com/sponsors/skillbobby](https://github.com/sponsors/skillbobby).
-
 ## Contact
 
 [Spiggle on X](https://x.com/iamspiggle)
