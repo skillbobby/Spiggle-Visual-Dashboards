@@ -62,10 +62,16 @@ See [docs/VISUAL_DASHBOARDS.md](docs/VISUAL_DASHBOARDS.md).
 - **[List View](https://github.com/skillbobby/Spiggle-List-View)** — switch a Filament table to an alphabetical list.
 - **[Portal Snapshot](https://github.com/skillbobby/Spiggle-Filament-Portal-Snapshot)** — schedule, restore, and export database snapshots, including demo resets.
 
+## Sponsors
+
+If this package is useful, consider supporting development:
+
+[![GitHub Sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=%23EA4AAA)](https://github.com/sponsors/skillbobby)
+
 ## Contact
 
 [Spiggle on X](https://x.com/iamspiggle)
 
 ## License
 
-All rights reserved. You can review this repository and install the package in your own Laravel application. See [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE).
