@@ -10,6 +10,88 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="site.css">
+  <style>
+    .demo-section { padding-top: 32px; }
+    .video-frame {
+      max-width: 860px;
+      margin: 28px auto 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px -20px rgba(17, 24, 39, 0.25);
+      border: 1px solid var(--line);
+      background: #000;
+      aspect-ratio: 16 / 9;
+    }
+    .video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .shot {
+      margin: 48px auto 0;
+      max-width: 960px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .shot img { width: 100%; height: auto; display: block; }
+    .features-grid { margin-top: 12px; }
+    .feature-card { display: flex; flex-direction: column; gap: 6px; }
+    .feature-card .tag {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+    }
+    .install-grid {
+      display: grid;
+      gap: 16px;
+      max-width: 720px;
+      margin: 28px auto 0;
+    }
+    .code-block {
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+      text-align: left;
+    }
+    .code-block + p, .install-grid p { margin: 8px 0 0; color: var(--muted); font-size: 0.95rem; text-align: left; }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+      text-align: left;
+    }
+    .step-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .step-card h3 { margin: 0 0 6px; font-size: 1rem; }
+    .step-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+    .plugins { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 24px; }
+    .plugin-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; text-align: left; }
+    .plugin-card h3 { margin: 0 0 6px; font-size: 1rem; }
+    .plugin-card p { margin: 0 0 14px; color: var(--muted); font-size: 0.92rem; }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -44,9 +126,12 @@
         <div class="section-label">Demo</div>
         <h2 class="section-title">Build a live dashboard in under 2 minutes</h2>
         <p class="section-desc">Create a board, bind a bar chart to a real model, add a KPI card, and publish the page.</p>
-        <div class="video" style="max-width:900px;margin:2rem auto;">
+        <div class="video-frame">
           <iframe src="https://www.youtube.com/embed/OAcjx3Kpk4E" title="Build a live Filament dashboard in under 2 minutes" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
+        <figure class="shot">
+          <img src="https://raw.githubusercontent.com/skillbobby/Spiggle-Visual-Dashboards/main/art/dashboard.jpg" alt="Sales Overview dashboard with live admissions, tasks, and department charts">
+        </figure>
       </div>
     </section>
 
@@ -54,28 +139,35 @@
       <div class="container">
         <div class="section-label">Features</div>
         <h2 class="section-title">Everything you need to ship a dashboard</h2>
+        <p class="section-desc">No separate data warehouse. Charts read the Eloquent models that already hold your records.</p>
         <div class="features-grid">
           <article class="feature-card">
-            <h3>Visual canvas</h3>
-            <p>Drag, resize, snap into gaps, and stack cards in front or behind. Layouts feel intentional without pixel-pushing.</p>
+            <div class="tag">Canvas</div>
+            <h3>Drag, resize, snap</h3>
+            <p>Cards snap into the nearest gap. Drop one on another to stack it in front or behind. Layouts feel intentional without pixel-pushing.</p>
           </article>
           <article class="feature-card">
-            <h3>Chart gallery</h3>
+            <div class="tag">Charts</div>
+            <h3>Gallery of visuals</h3>
             <p>KPI card, table, line, bar, column, pie, donut, stacked, funnel, and radial gauge. Pick the visual that matches the question.</p>
           </article>
           <article class="feature-card">
+            <div class="tag">Data</div>
             <h3>Live models</h3>
-            <p>Chart fields come from Eloquent models that already have records, including related names. No separate data warehouse required.</p>
+            <p>Bind category and measure fields from Eloquent models, including related names. Row count is available when you just need a total.</p>
           </article>
           <article class="feature-card">
+            <div class="tag">Share</div>
             <h3>Public link</h3>
             <p>Optional anonymous access at <code>/visual-dashboards/{id}/{slug}</code>. Signed-in viewers with the right role can always open it.</p>
           </article>
           <article class="feature-card">
+            <div class="tag">Access</div>
             <h3>Viewer roles</h3>
-            <p>Optional Spatie or Shield allowlist for signed-in viewing, including per dashlet. Works without Shield installed.</p>
+            <p>Optional Spatie or Shield allowlist for signed-in viewing, including per dashlet. Works fine if neither package is installed.</p>
           </article>
           <article class="feature-card">
+            <div class="tag">Panel</div>
             <h3>One sidebar item</h3>
             <p>Visual Dashboards opens the dashboard list. No extra clutter in the panel navigation.</p>
           </article>
@@ -83,39 +175,72 @@
       </div>
     </section>
 
-    <section id="install" class="install-section">
+    <section id="install">
       <div class="container">
         <div class="section-label">Install</div>
         <h2 class="section-title">Up and running in minutes</h2>
-        <pre><code>composer require spiggle/visual-dashboards
-php artisan migrate</code></pre>
-        <p>Register the plugin on your Filament panel:</p>
-        <pre><code>use Spiggle\VisualDashboards\Filament\VisualDashboardsPlugin;
+        <div class="install-grid">
+          <div>
+            <p>Require the package and migrate:</p>
+            <pre class="code-block">composer require spiggle/visual-dashboards
+php artisan migrate</pre>
+          </div>
+          <div>
+            <p>Register the plugin on your Filament panel:</p>
+            <pre class="code-block">use Spiggle\VisualDashboards\Filament\VisualDashboardsPlugin;
 
-$panel->plugin(VisualDashboardsPlugin::make());</code></pre>
-        <p>Verify the install:</p>
-        <pre><code>php artisan visual-dashboards:verify</code></pre>
+$panel->plugin(VisualDashboardsPlugin::make());</pre>
+          </div>
+          <div>
+            <p>Check the install:</p>
+            <pre class="code-block">php artisan visual-dashboards:verify</pre>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="how-it-works">
+    <section>
       <div class="container">
         <div class="section-label">How it works</div>
-        <h2 class="section-title">Build a dashboard</h2>
-        <ol class="steps">
-          <li>Open <strong>Visual Dashboards</strong> and create a new dashboard. Name it, then open the canvas.</li>
-          <li>Choose <strong>Insert visual</strong> and pick a chart. Bars work well when you want to compare categories.</li>
-          <li>Set the source category to <strong>Models</strong> and choose the model that holds the records. For the bars, pick the category field. For the length, pick <strong>Row count</strong>, or another measure. Save the chart.</li>
-          <li>Insert a <strong>KPI card</strong> the same way when the page needs a headline number.</li>
-          <li>Drag a card by its header. It snaps into the nearest gap. Drop it on another card to place it in front or behind.</li>
-          <li>Open <strong>Dashboard settings</strong>, turn on <strong>Public link</strong>, and save.</li>
-          <li>Open the share URL. Signed-in allowed viewers can always use it. With the public link on, anyone with the URL can view the page.</li>
-        </ol>
+        <h2 class="section-title">From blank canvas to shareable page</h2>
+        <div class="steps-grid">
+          <article class="step-card">
+            <div class="step-num">1</div>
+            <h3>Create a dashboard</h3>
+            <p>Open Visual Dashboards, name a new board, and open the canvas.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-num">2</div>
+            <h3>Insert a visual</h3>
+            <p>Pick a chart. Bars work well for comparing categories. Bind the model, category field, and measure.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-num">3</div>
+            <h3>Add a headline</h3>
+            <p>Drop a KPI card the same way when the page needs a single number at the top.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-num">4</div>
+            <h3>Arrange the canvas</h3>
+            <p>Drag by the header. Cards snap into gaps. Drop one on another to stack it.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-num">5</div>
+            <h3>Publish</h3>
+            <p>Turn on Public link in dashboard settings. Anyone with the URL can view it; signed-in allowed roles can always open it.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-num">6</div>
+            <h3>Share</h3>
+            <p>Copy the share URL. The page stays live against the records already in your app.</p>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section class="plugins-section">
+    <section>
       <div class="container">
+        <div class="section-label">Ecosystem</div>
         <h2 class="section-title">More Spiggle plugins</h2>
         <div class="plugins">
           <article class="plugin-card">
@@ -147,7 +272,7 @@ $panel->plugin(VisualDashboardsPlugin::make());</code></pre>
         <div class="custom-cta">
           <div class="custom-cta-copy">
             <h2>Need something custom?</h2>
-            <p>Spiggle specializes in developing custom Filament panels and bespoke plugins. Whether you require a modified version of an existing package or a completely new solution built from the ground up, contact us to discuss your project requirements.</p>
+            <p>Spiggle builds custom Filament panels and plugins. Whether you need a modified package or something new, get in touch.</p>
           </div>
           <a class="btn btn-accent custom-cta-btn" href="https://x.com/iamspiggle">Get in touch →</a>
         </div>
