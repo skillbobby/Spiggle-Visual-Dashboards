@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Package** | `spiggle/visual-dashboards` v1.1.9 |
+| **Package** | `spiggle/visual-dashboards` v1.2.0 |
 
 Turn the records already in your app into a dashboard people actually want to open. Pick a model, drop a chart on the canvas, and publish a live page in a few minutes.
 
