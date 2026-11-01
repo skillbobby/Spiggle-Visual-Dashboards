@@ -2443,6 +2443,7 @@ body.vd-resizing * {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-gutter: stable;
     padding: 1rem 1.35rem 1.5rem;
     -webkit-overflow-scrolling: touch;
 }
@@ -2451,6 +2452,10 @@ body.vd-resizing * {
 .vd-builder-preview .dashlet-viz-preview-chart,
 .vd-builder-preview .dashlet-chart-host-preview {
     overflow: visible;
+}
+
+.vd-builder-preview .dashlet-viz-preview-titles {
+    min-height: 2.55rem;
 }
 
 .vd-builder-preview .vd-panel-preview {

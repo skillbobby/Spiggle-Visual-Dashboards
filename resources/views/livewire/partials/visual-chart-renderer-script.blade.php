@@ -780,28 +780,19 @@
             const hostHeight = host.clientHeight || 0;
 
             const containerHeight = Math.max(wrapHeight, hostHeight, 180);
-
-
+            const isPreview = host.classList.contains('dashlet-chart-host-preview');
 
             if (isRadialBar) {
-                return Math.max(280, containerHeight);
+                return isPreview ? 300 : Math.max(280, containerHeight);
             }
 
             if (horizontalBar) {
+                const needed = Math.max(220, labels.length * 34 + 80);
 
-                const barHeight = 34;
-
-                const needed = Math.max(200, labels.length * barHeight + 72);
-
-
-
-                return Math.max(needed, containerHeight);
-
+                return isPreview ? Math.min(480, needed) : Math.max(needed, containerHeight);
             }
 
-
-
-            return Math.max(containerHeight, 220);
+            return isPreview ? 280 : Math.max(containerHeight, 220);
 
         };
 
@@ -863,7 +854,10 @@
 
                     animations: { enabled: false },
 
-                    redrawOnParentResize: true,
+                    parentHeightOffset: host.classList.contains('dashlet-chart-host-preview') ? 0 : 15,
+
+                    redrawOnParentResize: ! host.classList.contains('dashlet-chart-host-preview'),
+                    redrawOnWindowResize: ! host.classList.contains('dashlet-chart-host-preview'),
 
                 },
 

@@ -181,6 +181,36 @@
         };
     };
 
+    if (! window.vdBuilderScrollLock) {
+        window.vdBuilderScrollLock = true;
+        const installScrollLock = () => {
+            if (! window.Livewire?.hook || window.vdBuilderScrollLockInstalled) {
+                return;
+            }
+            window.vdBuilderScrollLockInstalled = true;
+            const selectors = ['.vd-builder-preview', '.vd-builder-controls', '.vd-format-panel'];
+            Livewire.hook('commit', ({ succeed }) => {
+                const saved = selectors.flatMap((selector) => [...document.querySelectorAll(selector)].map((node, index) => ({
+                    selector,
+                    index,
+                    top: node.scrollTop,
+                })));
+                succeed(() => {
+                    requestAnimationFrame(() => {
+                        saved.forEach(({ selector, index, top }) => {
+                            const node = document.querySelectorAll(selector)[index];
+                            if (node) {
+                                node.scrollTop = top;
+                            }
+                        });
+                    });
+                });
+            });
+        };
+        document.addEventListener('livewire:init', installScrollLock);
+        installScrollLock();
+    }
+
     window.vdPanelPreviewChart = function (initialPayload) {
         return {
             payload: initialPayload || null,
