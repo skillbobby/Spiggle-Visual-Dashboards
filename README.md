@@ -6,6 +6,16 @@
 
 Turn the records already in your app into a dashboard people actually want to open. Pick a model, drop a chart on the canvas, and publish a live page in a few minutes.
 
+
+## Live demo
+
+https://spiggle.skillbobby.com
+
+**Email:** demo@spiggle.net  
+**Password:** password
+
+Open Visual Dashboards in the panel to see the canvas and live charts.
+
 ## Install
 
 ```bash
