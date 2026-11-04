@@ -544,7 +544,7 @@
         },
 
         async applyGrain(item, grain) {
-            this.destroyCharts();
+            this.destroyCharts(true);
 
             const nextItems = await $wire.setGrain(Number(item.id), grain);
 
@@ -553,8 +553,11 @@
             }
         },
 
-        destroyCharts() {
-            Object.values(this.charts).forEach((chart) => {
+        destroyCharts(preserveLiveline = false) {
+            Object.entries(this.charts).forEach(([key, chart]) => {
+                if (preserveLiveline && chart?._isLiveline) {
+                    return;
+                }
                 try {
                     if (chart && typeof chart.destroy === 'function') {
                         chart.destroy();
@@ -562,8 +565,8 @@
                 } catch (error) {
                     // chart library already tore the instance down
                 }
+                delete this.charts[key];
             });
-            this.charts = {};
         },
 
         renderChart(host, payload, attempt = 0) {

@@ -126,12 +126,15 @@
             const type = payload.type || '';
             const grain = payload.interactive?.grain || '';
             const variant = this.chartVariantSignature(type, payload);
+            const engine = payload.visual?.chart_engine || 'apexcharts';
             const numberFormat = payload.visual?.number_format || 'number';
             const currency = payload.visual?.currency || 'USD';
 
             return String(payload.id || '')
                 + '|'
                 + type
+                + '|'
+                + engine
                 + '|'
                 + grain
                 + '|'
@@ -507,7 +510,9 @@
 
             host._spiggleChartSignature = signature;
 
-            if (this.charts[chartId] && typeof this.charts[chartId].destroy === 'function') {
+            const useLiveline = payload.type === 'line' && (payload.visual?.chart_engine === 'liveline' || payload.visual?.chart_variant === 'liveline');
+
+            if (!useLiveline && this.charts[chartId] && typeof this.charts[chartId].destroy === 'function') {
                 this.charts[chartId].destroy();
             }
 

@@ -3,6 +3,16 @@
         <h4 class="vd-transform-heading">Chart style</h4>
 
         <label class="vd-field">
+            <span>Chart engine</span>
+            <select wire:model.live="editChartEngine" class="vd-input">
+                @foreach ($this->chartEngineOptions() as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </label>
+        <p class="vd-muted">{{ \Spiggle\VisualDashboards\Support\ChartVariantCatalog::engineHint($editChartEngine ?? 'apexcharts', $selectedVisual->type) }}</p>
+
+        <label class="vd-field">
             <span>Variant</span>
             <select wire:model.live="editChartVariant" class="vd-input">
                 @foreach ($this->chartVariantOptions() as $value => $label)

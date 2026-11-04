@@ -102,6 +102,9 @@ class DashletRegistry
             $visual['color_scheme'] ?? null,
             $visual['color'] ?? '#f59e0b'
         );
+        $visual['chart_engine'] = ChartVariantCatalog::normalizeEngine(
+            $visual['chart_engine'] ?? 'apexcharts'
+        );
 
         if (ChartVariantCatalog::supports($dashlet->type)) {
             $visual['chart_variant'] = ChartVariantCatalog::normalize(

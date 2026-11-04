@@ -21,6 +21,7 @@
         'border' => $editBorder,
         'number_format' => $this->normalizedNumberFormat(),
         'currency' => $this->normalizedCurrency(),
+        'chart_engine' => \Spiggle\VisualDashboards\Support\ChartVariantCatalog::normalizeEngine($editChartEngine ?? 'apexcharts'),
         'title' => [
             'font' => $titleFont,
             'size' => $titleSize,

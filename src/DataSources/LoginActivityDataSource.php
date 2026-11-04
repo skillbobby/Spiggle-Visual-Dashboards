@@ -58,9 +58,32 @@ class LoginActivityDataSource extends BaseDataSource
         }
 
         $normalized = QueryConfig::normalize($config);
+        $xField = strtolower((string) ($normalized['mapping']['x'] ?? ($normalized['group_by'][0] ?? '')));
 
-        if (($normalized['mapping']['x'] ?? '') !== '' || ($normalized['mapping']['y'] ?? '') !== '') {
+        if (in_array($xField, ['features', 'users'], true)) {
             return array_slice($this->roleLandscapeRows($normalized), 0, $limit);
+        }
+
+        if ($xField === 'occurred_at' || in_array('occurred_at', $normalized['group_by'] ?? [], true)) {
+            $query = DB::table($this->table())
+                ->orderByDesc('occurred_at')
+                ->limit($limit);
+
+            if (filled($normalized['filters']['role_name'] ?? null)) {
+                $query->where('role_name', (string) $normalized['filters']['role_name']);
+            }
+
+            $rows = $query->get(['id', 'user_id', 'role_name', 'occurred_at'])
+                ->map(static fn ($row): array => [
+                    'period' => Carbon::parse($row->occurred_at)->toDateString(),
+                    'role_name' => (string) ($row->role_name ?: 'User'),
+                    'occurred_at' => (string) $row->occurred_at,
+                    'logins' => 1,
+                    'total' => 1,
+                ])
+                ->all();
+
+            return $this->finalizeRows($rows, $config);
         }
 
         $chart = $this->chartPayload('table', $config);
@@ -68,10 +91,12 @@ class LoginActivityDataSource extends BaseDataSource
 
         foreach ($chart['labels'] ?? [] as $index => $label) {
             foreach ($chart['datasets'] ?? [] as $dataset) {
+                $count = (int) ($dataset['data'][$index] ?? 0);
                 $rows[] = [
                     'period' => $label,
                     'role_name' => $dataset['label'] ?? 'Role',
-                    'total' => $dataset['data'][$index] ?? 0,
+                    'logins' => $count,
+                    'total' => $count,
                 ];
             }
         }

@@ -24,7 +24,7 @@
     <div
         wire:loading.flex.delay.300ms
         class="dashlet-viz-preview-loading"
-        wire:target="editSourceField,editGroupBy,editBreakdown,editAggregation,editTransforms,editSourceKey,editSourceGroup,editRelatedJoins,editPeriodGrains,editTimeGrain,editChartVariant,editNumberFormat,editCurrency,editColorScheme,editLegendShow,editLegendPosition,editDataLabels,editShowXAxisTitle,editShowYAxisTitle,changeVisualType,saveDataSource"
+        wire:target="editSourceField,editGroupBy,editBreakdown,editAggregation,editTransforms,editSourceKey,editSourceGroup,editRelatedJoins,editPeriodGrains,editTimeGrain,editChartEngine,editChartVariant,editNumberFormat,editCurrency,editColorScheme,editLegendShow,editLegendPosition,editDataLabels,editShowXAxisTitle,editShowYAxisTitle,changeVisualType,saveDataSource"
     >
         <x-filament::loading-indicator class="h-8 w-8 text-primary-600" />
         <span class="dashlet-viz-preview-loading-label">Updating preview…</span>

@@ -24,6 +24,7 @@ use Spiggle\VisualDashboards\DataSources\FormAuditLogDataSource;
 use Spiggle\VisualDashboards\Models\Dashlet;
 use Spiggle\VisualDashboards\Services\DashletRegistry;
 use Spiggle\VisualDashboards\Services\DataEngine;
+use Spiggle\VisualDashboards\Support\ChartVariantCatalog;
 use Spiggle\VisualDashboards\Support\DashletAccess;
 use Spiggle\VisualDashboards\Support\DashletTypes;
 use Spiggle\VisualDashboards\Support\FeatureCatalog;
@@ -463,6 +464,13 @@ class DashletFormSchema
                 ->collapsed()
                 ->columns(2)
                 ->schema([
+                    Select::make('visual.chart_engine')
+                        ->label('Chart engine')
+                        ->native(false)
+                        ->options(ChartVariantCatalog::engineOptions())
+                        ->default('apexcharts')
+                        ->live(debounce: $debounce)
+                        ->visible(fn (Get $get): bool => ! in_array((string) $get('type'), ['stat_card', 'hero', 'insight_list', 'table', 'container'], true)),
                     Select::make('visual.number_format')
                         ->label('Number format')
                         ->native(false)

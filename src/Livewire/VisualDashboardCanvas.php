@@ -66,6 +66,8 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
 
     public string $editCurrency = 'USD';
 
+    public string $editChartEngine = 'apexcharts';
+
     public string $editChartVariant = 'basic';
 
     public string $formatTab = 'title';
@@ -295,6 +297,9 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $this->editBorder = (bool) data_get($config, 'visual.border', true);
         $this->editNumberFormat = (string) data_get($config, 'visual.number_format', 'number');
         $this->editCurrency = (string) data_get($config, 'visual.currency', 'USD');
+        $this->editChartEngine = ChartVariantCatalog::normalizeEngine(
+            data_get($config, 'visual.chart_engine', 'apexcharts')
+        );
         $this->editChartVariant = ChartVariantCatalog::normalize(
             $visual->type,
             data_get($config, 'visual.chart_variant')
@@ -612,7 +617,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
             return false;
         }
 
-        if (preg_match('/(_count|_total|amount|price|qty|quantity|score|value|tokens|spend)$/i', $key) === 1) {
+        if (preg_match('/(_count|_total|amount|price|qty|quantity|score|value|tokens|spend|logins|total)$/i', $key) === 1) {
             return true;
         }
 
@@ -836,6 +841,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $config['visual']['border'] = $this->editBorder;
         $config['visual']['number_format'] = $this->normalizedNumberFormat();
         $config['visual']['currency'] = $this->normalizedCurrency();
+        $config['visual']['chart_engine'] = ChartVariantCatalog::normalizeEngine($this->editChartEngine);
 
         if (ChartVariantCatalog::supports($visual->type)) {
             $config['visual']['chart_variant'] = ChartVariantCatalog::normalize(
@@ -1339,6 +1345,11 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
         $this->refreshPreviewCache();
     }
 
+    public function updatedEditChartEngine(): void
+    {
+        $this->dispatchPreviewStyleSync();
+    }
+
     public function updatedEditChartVariant(): void
     {
         $this->dispatchPreviewStyleSync();
@@ -1425,6 +1436,14 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
     /**
      * @return array<string, string>
      */
+    public function chartEngineOptions(): array
+    {
+        return ChartVariantCatalog::engineOptions();
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public function chartVariantOptions(): array
     {
         $type = $this->selectedVisual()?->type ?? '';
@@ -1445,6 +1464,7 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
             'border' => $this->editBorder,
             'number_format' => $this->normalizedNumberFormat(),
             'currency' => $this->normalizedCurrency(),
+            'chart_engine' => ChartVariantCatalog::normalizeEngine($this->editChartEngine),
             'kpi' => $this->buildKpiVisualConfig(),
             ...$this->formatVisualConfig(),
             ...(ChartVariantCatalog::supports($type)
@@ -2187,11 +2207,17 @@ class VisualDashboardCanvas extends Component implements HasActions, HasSchemas
                 $groupBy = $this->defaultDateDimensionField();
             }
 
+            $groups = [];
+
             if ($groupBy !== '') {
-                $config['group_by'] = [$groupBy];
-            } else {
-                $config['group_by'] = [];
+                $groups[] = $groupBy;
             }
+
+            if ($this->editBreakdown !== '' && ! in_array($this->editBreakdown, $groups, true)) {
+                $groups[] = $this->editBreakdown;
+            }
+
+            $config['group_by'] = $groups;
 
             $mapping = ['y' => 'value'];
 

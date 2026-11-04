@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Spiggle\VisualDashboards\Filament\Resources\CustomDashboards\CustomDashboardResource;
 use Spiggle\VisualDashboards\Models\CustomDashboard;
@@ -25,6 +26,7 @@ class CustomDashboardsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('created_at')->orderByDesc('id'))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()

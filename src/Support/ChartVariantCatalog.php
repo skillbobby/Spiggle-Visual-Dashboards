@@ -7,6 +7,41 @@ class ChartVariantCatalog
     /**
      * @return array<string, string>
      */
+    public static function engineOptions(): array
+    {
+        return [
+            'apexcharts' => 'ApexCharts (Standard)',
+            'liveline' => 'Live Charts (Liveline Animated)',
+        ];
+    }
+
+    public static function normalizeEngine(mixed $engine): string
+    {
+        $key = strtolower(trim((string) ($engine ?? '')));
+
+        if (in_array($key, ['liveline', 'live', 'livecharts', 'live_charts'], true)) {
+            return 'liveline';
+        }
+
+        return 'apexcharts';
+    }
+
+    public static function engineHint(string $engine, string $type): string
+    {
+        if (self::normalizeEngine($engine) === 'liveline') {
+            if ($type === 'line') {
+                return 'Renders an interactive 60fps Liveline canvas with monotone spline interpolation, pulsing live endpoint dot, floating value pill, and crosshair scrubbing.';
+            }
+
+            return 'Enables smooth entrance choreography, dynamic data morphing, and live transition animations.';
+        }
+
+        return 'Standard static rendering via ApexCharts.';
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public static function optionsForType(string $type): array
     {
         return match ($type) {
@@ -33,6 +68,7 @@ class ChartVariantCatalog
                 'straight' => 'Straight line',
                 'area' => 'Area chart',
                 'data_labels' => 'Line with data labels',
+                'liveline' => 'Liveline (animated)',
             ],
             'pie' => [
                 'basic' => 'Basic',
@@ -117,6 +153,7 @@ class ChartVariantCatalog
         return match ($type.':'.$variant) {
             'column:stacked', 'bar:group', 'bar:stacked' => 'Uses the same data. Add a series / breakdown field on the Data source tab to split bars into groups.',
             'bar:race' => 'Sorts values descending and animates bars on load. Full timeline bar races need a time-series source.',
+            'line:liveline' => 'Interactive 60fps Liveline canvas with monotone spline interpolation, pulsing live dot, floating value pill, and crosshair scrubbing.',
             'radialbar:bands' => 'Uses a green → amber → red gradient to highlight low, medium, and high readings.',
             'radialbar:custom_label' => 'Shows your dashlet heading (or gauge label) inside the gauge arc.',
             'radialbar:semi_circle' => 'Half-circle gauge — ideal for compact grid slots.',

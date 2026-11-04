@@ -349,6 +349,10 @@ class DataEngine
             return $this->chartFromSeries($rows, $x, $y, $series);
         }
 
+        if (\Spiggle\VisualDashboards\Support\GroupByDimension::isTemporal($x)) {
+            usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left[$x] ?? ''), (string) ($right[$x] ?? '')));
+        }
+
         return [
             'labels' => array_map(static fn (array $row): string => (string) ($row[$x] ?? ''), $rows),
             'datasets' => [[

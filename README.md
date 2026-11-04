@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Package** | `spiggle/visual-dashboards` v1.2.3 |
+| **Package** | `spiggle/visual-dashboards` v1.3.0 |
 
 Turn the records already in your app into a dashboard people actually want to open. Pick a model, drop a chart on the canvas, and publish a live page in a few minutes.
 
@@ -52,6 +52,7 @@ php artisan visual-dashboards:verify
 ## Features
 
 - **Visual Dashboards canvas** — drag, resize, snap into gaps, and stack cards in front or behind
+- **Live Charts (Liveline Animated) & ApexCharts** — switch any chart card between ApexCharts and the 60fps Liveline engine with monotone cubic splines, pulsing live endpoints, floating value pills, crosshair scrubbing, and smooth period grain morphing
 - **Chart gallery** — KPI card, table, line, bar, column, pie, donut, stacked, funnel, radial gauge
 - **Live models** — chart fields come from Eloquent models that already have records, including related names
 - **Public link** — optional anonymous access at `/visual-dashboards/{id}/{slug}`
